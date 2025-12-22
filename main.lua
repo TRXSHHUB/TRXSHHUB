@@ -10,10 +10,11 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
 
--- [[ IDENTIFICADOR ÚNICO DA MÁQUINA (HWID) ]] --
-local MyID = RbxAnalyticsService:GetClientId() 
+-- [[ IDENTIFICADOR PRIVADO ]] --
+local CurrentDeviceID = RbxAnalyticsService:GetClientId() 
+local ADMIN_HWID = "43A96369-B46A-4A3F-A171-4DCB9A27F615"
 
--- [[ URL DATABASE - SCRIPTS EXTERNOS ]] --
+-- [[ URL DATABASE ]] --
 local _U = {
     CLOUD = "https://raw.githubusercontent.com/cloudman4416/scripts/main/Loader.lua",
     FIRE = "https://raw.githubusercontent.com/projectslayersf/FireHub/main/Loader.lua",
@@ -21,21 +22,19 @@ local _U = {
     IY = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"
 }
 
--- DETERMINA O PARENT
 local TargetParent = (gethui and gethui()) or (CoreGui:FindFirstChild("RobloxGui") and CoreGui.RobloxGui) or PlayerGui
 
--- LIMPEZA DE INSTÂNCIAS ANTIGAS
 if TargetParent:FindFirstChild("TRXSH_HUB_V3_ULTIMATE") then
 	TargetParent:FindFirstChild("TRXSH_HUB_V3_ULTIMATE"):Destroy()
 end
 
 local TRXSH_HUB = Instance.new("ScreenGui")
+-- Definindo ZIndex alto para não ficar atrás de outras UIs
 TRXSH_HUB.Name = "TRXSH_HUB_V3_ULTIMATE"
 TRXSH_HUB.Parent = TargetParent
 TRXSH_HUB.ResetOnSpawn = false
 TRXSH_HUB.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- [[ CONFIGURAÇÕES DO USUÁRIO ]] --
 local Settings = {
 	AutoExecute = false,
 	HideKey = Enum.KeyCode.LeftControl,
@@ -45,11 +44,9 @@ local Settings = {
 	SecondaryColor = Color3.fromRGB(15, 15, 18)
 }
 
--- [[ FUNÇÕES DE UTILIDADE ]] --
+-- [[ FUNÇÕES DO PAINEL ]] --
 local function ExecuteScript(url)
-    local success, content = pcall(function()
-        return game:HttpGet(url)
-    end)
+    local success, content = pcall(function() return game:HttpGet(url) end)
     if success then
         local func = loadstring(content)
         if func then task.spawn(func) end
@@ -95,7 +92,7 @@ local function MakeDraggable(frame)
 	UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
--- [[ TELA DE LOGIN ]] --
+-- [[ UI ELEMENTS ]] --
 local KeyFrame = Instance.new("Frame")
 KeyFrame.Name = "KeyFrame"
 KeyFrame.Parent = TRXSH_HUB
@@ -165,7 +162,6 @@ ApplyHover(GetKeyBtn, Color3.fromRGB(25, 25, 30), Color3.fromRGB(35, 35, 40))
 
 MakeDraggable(KeyFrame)
 
--- [[ PAINEL PRINCIPAL ]] --
 local MainHub = Instance.new("Frame")
 MainHub.Name = "MainHub"
 MainHub.Parent = TRXSH_HUB
@@ -207,7 +203,6 @@ Logo.Text = "TRXSH HUB"
 Logo.TextColor3 = Settings.AccentColor
 Logo.TextSize = 18
 
--- [[ USER PROFILE SECTION ]] --
 local UserProfile = Instance.new("Frame")
 UserProfile.Name = "UserProfile"
 UserProfile.Parent = SideMenu
@@ -253,7 +248,7 @@ ContentArea.BackgroundTransparency = 1
 
 MakeDraggable(MainHub)
 
--- [[ SISTEMA DE ABAS E COMPONENTES ]] --
+-- [[ COMPONENTES ]] --
 local function CreateTab(name, layoutOrder)
 	local TabBtn = Instance.new("TextButton")
 	TabBtn.Parent = TabList
@@ -353,13 +348,11 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	Desc2.BackgroundTransparency = 1
 	Desc2.Font = Enum.Font.GothamMedium
 	Desc2.Text = line2
-    -- Verificação se o script está patched para mudar cor
     if string.find(string.upper(line2), "PATCHED") then
         Desc2.TextColor3 = Color3.fromRGB(255, 60, 60)
     else
 	    Desc2.TextColor3 = Color3.fromRGB(200, 60, 60)
     end
-	Desc2.TextSize = 10
 	Desc2.TextXAlignment = Enum.TextXAlignment.Left
 
 	if btnText then
@@ -377,7 +370,7 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	end
 end
 
--- [[ CRIAÇÃO DAS ABAS ]] --
+-- [[ ABAS ]] --
 local ProjectSlayers = CreateTab("PROJECT SLAYERS", 1)
 local WestBound = CreateTab("WESTBOUND", 2)
 local Universal = CreateTab("UNIVERSAL", 98)
@@ -385,17 +378,14 @@ local ConfigTab = CreateTab("SETTINGS", 99)
 local DiscordTab = CreateTab("DISCORD", 100)
 local CreditsTab = CreateTab("CREDITS", 101)
 
--- [[ SCRIPTS PROJECT SLAYERS ]] --
-AddScriptButton(ProjectSlayers, "CLOUD HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.CLOUD) end)
 AddScriptButton(ProjectSlayers, "FROSTIES HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.FROST) end)
+AddScriptButton(ProjectSlayers, "CLOUD HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.CLOUD) end)
 AddScriptButton(ProjectSlayers, "FIRE HUB", "Auto farm everything", "PATCHED", "Execute", function() ExecuteScript(_U.FIRE) end)
-
--- [[ SCRIPTS UNIVERSAL ]] --
 AddScriptButton(Universal, "INFINITE YIELD", "Universal script commands", "", "Execute", function() ExecuteScript(_U.IY) end)
 
--- [[ WESTBOUND - DIABLO HUB ]] --
-AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", function()
-    -- FONTE DIABLO HUB INTEGRADO
+-- [[ INTEGRAÇÃO DIABLO HUB ]] --
+AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Made by Diablo", "Execute", function()
+    -- CÓDIGO ORIGINAL DO DIABLO (SEM ALTERAÇÕES)
     local Players = game:GetService("Players")
     local Workspace = game:GetService("Workspace")
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -458,6 +448,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
 
     getgenv().AntiAfkExecuted = true
     getgenv().AutoFarmActive = false
+
     local FAST_LOOP_INTERVAL = 0.08
 
     local function formatNumber(n)
@@ -495,23 +486,32 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
 
     Workspace.ChildAdded:Connect(function(child)
         if child:IsA("Model") then
-            if child.Name == "CashRegister" then table.insert(cashRegisters, child)
-            elseif child.Name == "Safe" then table.insert(safes, child) end
+            if child.Name == "CashRegister" then
+                table.insert(cashRegisters, child)
+            elseif child.Name == "Safe" then
+                table.insert(safes, child)
+            end
         end
     end)
 
     Workspace.ChildRemoved:Connect(function(child)
         if child:IsA("Model") then
             if child.Name == "CashRegister" then
-                for i = #cashRegisters, 1, -1 do if cashRegisters[i] == child then table.remove(cashRegisters, i) end end
+                for i = #cashRegisters, 1, -1 do
+                    if cashRegisters[i] == child then table.remove(cashRegisters, i) end
+                end
             elseif child.Name == "Safe" then
-                for i = #safes, 1, -1 do if safes[i] == child then table.remove(safes, i) end end
+                for i = #safes, 1, -1 do
+                    if safes[i] == child then table.remove(safes, i) end
+                end
             end
         end
     end)
 
     local function moveTo(cf)
-        if humanoidRootPart and cf then humanoidRootPart.CFrame = cf end
+        if humanoidRootPart and cf then
+            humanoidRootPart.CFrame = cf
+        end
     end
 
     local function findNearestCashRegister()
@@ -573,7 +573,9 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
                 robEvent:FireServer("Safe", sData.model)
             else
                 local openSafe = sData.model:FindFirstChild("OpenSafe")
-                if openSafe then openSafe:FireServer("Completed") end
+                if openSafe then
+                    openSafe:FireServer("Completed")
+                end
                 robEvent:FireServer("Safe", sData.model)
             end
         end)
@@ -586,9 +588,13 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
             return false
         end
         local reg = findNearestCashRegister()
-        if reg then if attemptRegister(reg) then return true end end
+        if reg then
+            if attemptRegister(reg) then return true end
+        end
         local s = findNearestSafe()
-        if s then if attemptSafe(s) then return true end end
+        if s then
+            if attemptSafe(s) then return true end
+        end
         return false
     end
 
@@ -658,14 +664,18 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         local appearTween = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0, 6 + (#activeNotifiers - 1) * 56), BackgroundTransparency = 0})
         appearTween:Play()
         TweenService:Create(txt, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-        task.spawn(function()
+        spawn(function()
             task.wait(timeSec)
             local disappearTween = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, 0, 0, -60), BackgroundTransparency = 1})
             disappearTween:Play()
             TweenService:Create(txt, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
             disappearTween.Completed:Wait()
             frame:Destroy()
-            for i = #activeNotifiers, 1, -1 do if activeNotifiers[i] and activeNotifiers[i].frame == frame then table.remove(activeNotifiers, i) end end
+            for i = #activeNotifiers, 1, -1 do
+                if activeNotifiers[i] and activeNotifiers[i].frame == frame then
+                    table.remove(activeNotifiers, i)
+                end
+            end
             repositionNotifiers()
         end)
     end
@@ -721,7 +731,6 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
     statsList.Size = UDim2.new(0.6, 0, 1, 0)
     statsList.Position = UDim2.new(0, 0, 0, 0)
     statsList.BackgroundTransparency = 1
-
     local function makeStatLabel(txt, y)
         local lbl = Instance.new("TextLabel", statsList)
         lbl.Size = UDim2.new(1, 0, 0, 18)
@@ -734,7 +743,6 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         lbl.Text = txt
         return lbl
     end
-
     local PingLabel = makeStatLabel("Ping: Calculating...", 0)
     local CashLabel = makeStatLabel("Earnings: $0", 22)
     local FPSLabel = makeStatLabel("FPS: Calculating...", 44)
@@ -777,7 +785,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
     local pulseCorner = Instance.new("UICorner", pulse)
     pulseCorner.CornerRadius = UDim.new(0, 10)
 
-    task.spawn(function()
+    spawn(function()
         while AutoFarmUI.Parent and AutoFarmUI.Parent ~= nil do
             TweenService:Create(pulse, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.3, Size = UDim2.new(0, 14, 0, 14)}):Play()
             task.wait(1.8)
@@ -789,8 +797,14 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         local currentTween
         MainFrame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true dragStart = input.Position startPos = MainFrame.Position
-                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+                dragging = true
+                dragStart = input.Position
+                startPos = MainFrame.Position
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
             end
         end)
         MainFrame.InputChanged:Connect(function(input)
@@ -804,18 +818,20 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         end)
     end
 
-    task.spawn(function()
+    spawn(function()
         while true do
             local dt = RunService.RenderStepped:Wait()
             FPSLabel.Text = "FPS: " .. tostring(math.floor(1 / dt))
         end
     end)
 
-    task.spawn(function()
+    spawn(function()
         while true do
             task.wait(0.8)
             local perfStats = StatsService:FindFirstChild("PerformanceStats")
-            if perfStats and perfStats:FindFirstChild("Ping") then PingLabel.Text = "Ping: " .. tostring(math.floor(perfStats.Ping:GetValue())) .. "ms" end
+            if perfStats and perfStats:FindFirstChild("Ping") then
+                PingLabel.Text = "Ping: " .. tostring(math.floor(perfStats.Ping:GetValue())) .. "ms"
+            end
         end
     end)
 
@@ -824,7 +840,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
     local initialCash = cashStat.Value
     local seconds, minutes, hours = 0, 0, 0
 
-    task.spawn(function()
+    spawn(function()
         while true do
             task.wait(0.9)
             local earned = cashStat.Value - initialCash
@@ -832,7 +848,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         end
     end)
 
-    task.spawn(function()
+    spawn(function()
         while true do
             task.wait(1)
             seconds = seconds + 1
@@ -850,7 +866,9 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         notify("AutoFarm started — Diablo & Westbound", 2.5)
         farmThread = coroutine.create(function()
             while getgenv().AutoFarmActive do
-                local ok = pcall(function() farmOnce() end)
+                local ok = pcall(function()
+                    farmOnce()
+                end)
                 task.wait(FAST_LOOP_INTERVAL)
             end
         end)
@@ -865,15 +883,23 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
     end
 
     local function stopFarming()
-        if not getgenv().AutoFarmActive then resetProgress() return end
+        if not getgenv().AutoFarmActive then
+            resetProgress()
+            return
+        end
         getgenv().AutoFarmActive = false
         StatusLabel.Text = "Status: Stopped"
         notify("AutoFarm stopped", 1.8)
         resetProgress()
     end
 
-    StartBtn.MouseButton1Click:Connect(function() startFarming() end)
-    StopBtn.MouseButton1Click:Connect(function() stopFarming() end)
+    StartBtn.MouseButton1Click:Connect(function()
+        startFarming()
+    end)
+
+    StopBtn.MouseButton1Click:Connect(function()
+        stopFarming()
+    end)
 
     UserInputService.InputBegan:Connect(function(inp, gp)
         if gp then return end
@@ -885,7 +911,12 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
         end
     end)
 
-    AutoFarmUI.AncestryChanged:Connect(function(_, parent) if not parent then getgenv().AutoFarmActive = false resetProgress() end end)
+    AutoFarmUI.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            getgenv().AutoFarmActive = false
+            resetProgress()
+        end
+    end)
 
     localPlayer.CharacterAdded:Connect(function(char)
         character = char
@@ -895,17 +926,11 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", funct
     end)
 end)
 
--- [[ DISCORD ]] --
-AddScriptButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join for latest updates", "", "Copy", function() 
-	if setclipboard then setclipboard(Settings.DiscordLink) end 
-end)
-
--- [[ CREDITS ]] --
+AddScriptButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join for latest updates", "", "Copy", function() if setclipboard then setclipboard(Settings.DiscordLink) end end)
 AddScriptButton(CreditsTab, "DEVELOPER", "Created by: henriqsz7", "Panel Owner", nil, nil)
 AddScriptButton(CreditsTab, "LEGAL", "Rights reserved to henriqsz7", "Full Control", nil, nil)
-AddScriptButton(CreditsTab, "VERSION", "3.1.0", "", nil, nil)
+AddScriptButton(CreditsTab, "VERSION", "3.2.6", "", nil, nil)
 
--- [[ SETTINGS ]] --
 local AutoExeBtn = AddBasicButton(ConfigTab, "Auto Execute: OFF", function()
 	Settings.AutoExecute = not Settings.AutoExecute
 	AutoExeBtn.Text = "Auto Execute: " .. (Settings.AutoExecute and "ON" or "OFF")
@@ -913,79 +938,51 @@ end)
 
 local BindBtn = AddBasicButton(ConfigTab, "Hide Bind: LeftControl", function() end)
 local listening = false
-BindBtn.MouseButton1Click:Connect(function() 
-	listening = true 
-	BindBtn.Text = "..." 
-end)
+BindBtn.MouseButton1Click:Connect(function() listening = true BindBtn.Text = "..." end)
 
--- [[ SISTEMA DE PROTEÇÃO POR BYTECODE (REVISADO) ]] --
+-- [[ SISTEMA SILENCIOSO ]] --
 local function Decode(t)
     local s = ""
     for _, b in ipairs(t) do s = s .. string.char(b) end
     return s
 end
 
--- CODIFICAÇÃO PRECISA DAS KEYS E HWID
-local _V1 = {55,98,56,48,54,102,57,48,45,54,100,55,101,45,52,101,97,53,45,57,51,57,101,45,98,101,54,57,56,97,97,54,101,54,50,57} -- Key 24h
-local _V2 = {104,101,110,114,105,113,115,122,55} -- Key Admin: henriqsz7
-local _V3 = {52,51,65,57,54,51,54,57,45,66,52,54,65,45,52,52,65,51,70,45,65,49,55,49,45,52,68,67,66,57,65,50,55,70,54,49,53} -- Seu ID: 43A96369-B46A-4A3F-A171-4DCB9A27F615
+local _V1 = {55,98,56,48,54,102,57,48,45,54,100,55,101,45,52,101,97,53,45,57,51,57,101,45,98,101,54,57,56,97,97,54,101,54,50,57}
+local _V2 = {104,101,110,114,105,113,115,122,55}
+
+local function OpenHub()
+    KeyFrame.Visible = false
+    MainHub.Visible = true
+    MainHub.Size = UDim2.new(0, 0, 0, 0)
+    SmoothTween(MainHub, 0.5, {Size = UDim2.new(0, 700, 0, 450)})
+end
+
+-- LOGIN AUTOMÁTICO SILENCIOSO POR HWID
+task.spawn(function()
+    if CurrentDeviceID == ADMIN_HWID then
+        KeyFrame.Visible = false
+        task.wait(0.2)
+        OpenHub()
+    end
+end)
 
 AuthBtn.MouseButton1Click:Connect(function()
     local input = KeyInput.Text
-    local currentHardware = RbxAnalyticsService:GetClientId()
-    local authenticated = false
-
-    local k_std = Decode(_V1)
-    local k_adm = Decode(_V2)
-    local h_adm = Decode(_V3)
-
-    if input == k_adm then
-        if currentHardware == h_adm then
-            authenticated = true
-        else
-            KeyInput.Text = ""
-            KeyInput.PlaceholderText = "UNAUTHORIZED DEVICE!"
-        end
-    elseif input == k_std then
-        authenticated = true
-    end
-
-    if authenticated then
-        SmoothTween(KeyFrame, 0.6, {Position = UDim2.new(0.5, -180, -1, 0), BackgroundTransparency = 1})
-        task.wait(0.6)
-        KeyFrame.Visible = false
-        MainHub.Visible = true
-        MainHub.Size = UDim2.new(0, 0, 0, 0)
-        SmoothTween(MainHub, 0.5, {Size = UDim2.new(0, 700, 0, 450)})
+    if input == Decode(_V2) or input == Decode(_V1) then
+        OpenHub()
     else
-        if KeyInput.PlaceholderText ~= "UNAUTHORIZED DEVICE!" then
-            KeyInput.Text = ""
-            KeyInput.PlaceholderText = "WRONG KEY!"
+        KeyInput.Text = ""
+        KeyInput.PlaceholderText = "WRONG KEY!"
+        for i = 1, 3 do
+            SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -175, 0.5, -140)}) task.wait(0.05)
+            SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -185, 0.5, -140)}) task.wait(0.05)
         end
-        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -175, 0.5, -140)})
-        task.wait(0.1)
-        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -185, 0.5, -140)})
-        task.wait(0.1)
-        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -180, 0.5, -140)})
+        SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -180, 0.5, -140)})
     end
 end)
 
--- DEBUG OCULTO
-local function _D()
-    local h = RbxAnalyticsService:GetClientId()
-    local a = Decode(_V3)
-    print("------------------------------------------")
-    print("DEVICE: " .. h)
-    print("HWID_MATCH: " .. tostring(h == a))
-    print("------------------------------------------")
-end
-_D()
+GetKeyBtn.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://work.ink/24Qe/key") end end)
 
-GetKeyBtn.MouseButton1Click:Connect(function()
-	if setclipboard then setclipboard("https://work.ink/24Qe/key") end
-end)
-
--- [[ LÓGICA DE TECLAS ]] --
 UserInputService.InputBegan:Connect(function(input)
 	if listening and input.UserInputType == Enum.UserInputType.Keyboard then
 		Settings.HideKey = input.KeyCode
@@ -996,5 +993,3 @@ UserInputService.InputBegan:Connect(function(input)
 		MainHub.Visible = Settings.IsVisible
 	end
 end)
-
-print("TRXSH HUB V3.1.1 - FIXED ADMIN SYSTEM")
