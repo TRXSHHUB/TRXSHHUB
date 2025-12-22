@@ -8,11 +8,6 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 
--- [[ ANTI-TAMPER / ANTI-DUMP ]] --
-local function SecureLoad(url)
-    return loadstring(game:HttpGet(url))()
-end
-
 -- [[ STRING DECODING ENGINE ]] --
 local function _X(str)
     local newStr = ""
@@ -22,9 +17,27 @@ local function _X(str)
     return newStr
 end
 
+-- [[ SECURE LOAD FUNCTION ]] --
+local function SecureLoad(rawUrl)
+    local success, result = pcall(function()
+        return game:HttpGet(rawUrl)
+    end)
+    
+    if success then
+        local func, err = loadstring(result)
+        if func then
+            func()
+        else
+            warn("Error parsing script: " .. tostring(err))
+        end
+    else
+        warn("Error downloading script: " .. tostring(result))
+    end
+end
+
 -- [[ URLS EM HEXADECIMAL (PROTEÇÃO CONTRA HTTP SPY) ]] --
 local _U = {
-    DIABLO = _X("\x68\x74\x74\x70\x73\x3a\x2f\x2f\x70\x61\x73\x74\x65\x62\x69\x6e\x2e\x63\x6f\x6d\x2f\x72\x61\x77\x2f\x42\x33\x30\x75\x4c\x6b\x53\x4a"), -- Link ficticio, substitua pelo source completo se necessário
+    DIABLO = _X("\x68\x74\x74\x70\x73\x3a\x2f\x2f\x70\x61\x73\x74\x65\x62\x69\x6e\x2e\x63\x6f\x6d\x2f\x72\x61\x77\x2f\x42\x33\x30\x75\x4c\x6b\x53\x4a"), 
     CLOUD = _X("\x68\x74\x74\x70\x73\x3a\x2f\x2f\x72\x61\x77\x2e\x67\x69\x74\x68\x75\x62\x75\x73\x65\x72\x63\x6f\x6e\x74\x65\x6e\x74\x2e\x63\x6f\x6d\x2f\x63\x6c\x6f\x75\x64\x6d\x61\x6e\x34\x34\x31\x36\x2f\x73\x63\x72\x69\x70\x74\x73\x2f\x6d\x61\x69\x6e\x2f\x4c\x6f\x61\x64\x65\x72\x2e\x6c\x75\x61"),
     FIRE = _X("\x68\x74\x74\x70\x73\x3a\x2f\x2f\x72\x61\x77\x2e\x67\x69\x74\x68\x75\x62\x75\x73\x65\x72\x63\x6f\x6e\x74\x65\x6e\x74\x2e\x63\x6f\x6d\x2f\x70\x72\x6f\x6a\x65\x63\x74\x73\x6c\x61\x79\x65\x72\x73\x66\x2f\x46\x69\x72\x65\x48\x75\x62\x2f\x6d\x61\x69\x6e\x2f\x4c\x6f\x61\x64\x65\x72\x2e\x6c\x75\x61"),
     FROST = _X("\x68\x74\x74\x70\x73\x3a\x2f\x2f\x72\x61\x77\x2e\x67\x69\x74\x68\x75\x62\x75\x73\x65\x72\x63\x6f\x6e\x74\x65\x6e\x74\x2e\x63\x6f\x6d\x2f\x63\x61\x74\x74\x65\x72\x63\x61\x74\x74\x79\x2f\x53\x63\x72\x69\x70\x74\x73\x2f\x6d\x61\x69\x6e\x2f\x4c\x6f\x61\x64\x65\x72\x2e\x6c\x75\x61"),
@@ -389,23 +402,23 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	end
 end
 
--- [[ CRIAÇÃO DAS ABAS ]] --
-local CreditsTab = CreateTab("CREDITS", 1)
-local ProjectSlayers = CreateTab("PROJECT SLAYERS", 2)
-local WestBound = CreateTab("WESTBOUND", 3)
+-- [[ CRIAÇÃO DAS ABAS (ORDEM ATUALIZADA) ]] --
+local ProjectSlayers = CreateTab("PROJECT SLAYERS", 1)
+local WestBound = CreateTab("WESTBOUND", 2)
 local Universal = CreateTab("UNIVERSAL", 98)
 local ConfigTab = CreateTab("SETTINGS", 99)
 local DiscordTab = CreateTab("DISCORD", 100)
+local CreditsTab = CreateTab("CREDITS", 101) -- ABA DE CRÉDITOS AGORA EM BAIXO DO DISCORD
 
--- [[ CONTEÚDO CREDITS ]] --
+-- [[ CONTEÚDO CREDITS (VERSÃO 3.1.0) ]] --
 AddScriptButton(CreditsTab, "DEVELOPER INFORMATION", "Created by: henriqsz7", "Panel: TRXSH HUB", nil, nil)
 AddScriptButton(CreditsTab, "LEGAL NOTICE", "All panel rights are reserved to 'henriqsz7', the creator of the entire panel layout.", "", nil, nil)
 AddScriptButton(CreditsTab, "REMOVAL REQUEST", "If you own any of the scripts and do not want me to distribute them, request removal via my Discord server by sending a DM or opening a ticket.", "", nil, nil)
-AddScriptButton(CreditsTab, "VERSION CONTROL", "Current Version: 3.0.1 Ultimate", "Status: Undetected", nil, nil)
+AddScriptButton(CreditsTab, "VERSION CONTROL", "Current Version: 3.1.0", "Status: Undetected", nil, nil)
 
 -- [[ CONTEÚDO WESTBOUND ]] --
 AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", function()
-    -- [[ SCRIPT DIABLO HUB SOURCE COMPLETO AQUI ]] --
+    -- Link do Diablo Hub pode ser colocado aqui futuramente
 end)
 
 -- [[ CONTEÚDO PROJECT SLAYERS ]] --
