@@ -7,6 +7,12 @@ local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+
+-- [[ IDENTIFICADOR ÚNICO DA MÁQUINA (HWID) ]] --
+-- Esse ID é único para você.
+local MyID = RbxAnalyticsService:GetClientId() 
 
 -- [[ URL DATABASE - SCRIPTS EXTERNOS ]] --
 local _U = {
@@ -40,7 +46,7 @@ local Settings = {
 	SecondaryColor = Color3.fromRGB(15, 15, 18)
 }
 
--- [[ SISTEMA DE EXECUÇÃO EXTERNA ]] --
+-- [[ FUNÇÕES DE UTILIDADE ]] --
 local function ExecuteScript(url)
     local success, content = pcall(function()
         return game:HttpGet(url)
@@ -51,7 +57,6 @@ local function ExecuteScript(url)
     end
 end
 
--- [[ FUNÇÕES DE ESTÉTICA E TWEENING ]] --
 local function SmoothTween(obj, time, prop)
 	local info = TweenInfo.new(time, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 	local tween = TweenService:Create(obj, info, prop)
@@ -203,6 +208,34 @@ Logo.Text = "TRXSH HUB"
 Logo.TextColor3 = Settings.AccentColor
 Logo.TextSize = 18
 
+-- [[ USER PROFILE SECTION ]] --
+local UserProfile = Instance.new("Frame")
+UserProfile.Name = "UserProfile"
+UserProfile.Parent = SideMenu
+UserProfile.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+UserProfile.Position = UDim2.new(0, 10, 1, -60)
+UserProfile.Size = UDim2.new(0, 160, 0, 50)
+Instance.new("UICorner", UserProfile).CornerRadius = UDim.new(0, 8)
+
+local UserImage = Instance.new("ImageLabel")
+UserImage.Parent = UserProfile
+UserImage.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+UserImage.Position = UDim2.new(0, 5, 0, 5)
+UserImage.Size = UDim2.new(0, 40, 0, 40)
+UserImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. Player.UserId .. "&width=420&height=420&format=png"
+Instance.new("UICorner", UserImage).CornerRadius = UDim.new(1, 0)
+
+local UserName = Instance.new("TextLabel")
+UserName.Parent = UserProfile
+UserName.Position = UDim2.new(0, 50, 0, 5)
+UserName.Size = UDim2.new(0, 100, 0, 40)
+UserName.BackgroundTransparency = 1
+UserName.Font = Enum.Font.GothamBold
+UserName.Text = Player.DisplayName or Player.Name
+UserName.TextColor3 = Color3.fromRGB(255, 255, 255)
+UserName.TextSize = 12
+UserName.TextXAlignment = Enum.TextXAlignment.Left
+
 local TabList = Instance.new("ScrollingFrame")
 TabList.Parent = SideMenu
 TabList.Position = UDim2.new(0, 0, 0, 70)
@@ -340,7 +373,7 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	end
 end
 
--- [[ ABAS ]] --
+-- [[ CRIAÇÃO DAS ABAS ]] --
 local ProjectSlayers = CreateTab("PROJECT SLAYERS", 1)
 local WestBound = CreateTab("WESTBOUND", 2)
 local Universal = CreateTab("UNIVERSAL", 98)
@@ -356,9 +389,9 @@ AddScriptButton(ProjectSlayers, "FROSTIES HUB", "Auto farm everything", "Needs K
 -- [[ SCRIPTS UNIVERSAL ]] --
 AddScriptButton(Universal, "INFINITE YIELD", "Universal script commands", "", "Execute", function() ExecuteScript(_U.IY) end)
 
--- [[ WESTBOUND - DIABLO HUB (CÓDIGO INTEGRADO) ]] --
-AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated", "Execute", function()
-    -- [ INICIO DO CODIGO DIABLO HUB ]
+-- [[ WESTBOUND - DIABLO HUB ]] --
+AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "", "Execute", function()
+    -- FONTE DIABLO HUB INTEGRADO
     local Players = game:GetService("Players")
     local Workspace = game:GetService("Workspace")
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -458,32 +491,23 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
 
     Workspace.ChildAdded:Connect(function(child)
         if child:IsA("Model") then
-            if child.Name == "CashRegister" then
-                table.insert(cashRegisters, child)
-            elseif child.Name == "Safe" then
-                table.insert(safes, child)
-            end
+            if child.Name == "CashRegister" then table.insert(cashRegisters, child)
+            elseif child.Name == "Safe" then table.insert(safes, child) end
         end
     end)
 
     Workspace.ChildRemoved:Connect(function(child)
         if child:IsA("Model") then
             if child.Name == "CashRegister" then
-                for i = #cashRegisters, 1, -1 do
-                    if cashRegisters[i] == child then table.remove(cashRegisters, i) end
-                end
+                for i = #cashRegisters, 1, -1 do if cashRegisters[i] == child then table.remove(cashRegisters, i) end end
             elseif child.Name == "Safe" then
-                for i = #safes, 1, -1 do
-                    if safes[i] == child then table.remove(safes, i) end
-                end
+                for i = #safes, 1, -1 do if safes[i] == child then table.remove(safes, i) end end
             end
         end
     end)
 
     local function moveTo(cf)
-        if humanoidRootPart and cf then
-            humanoidRootPart.CFrame = cf
-        end
+        if humanoidRootPart and cf then humanoidRootPart.CFrame = cf end
     end
 
     local function findNearestCashRegister()
@@ -545,9 +569,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
                 robEvent:FireServer("Safe", sData.model)
             else
                 local openSafe = sData.model:FindFirstChild("OpenSafe")
-                if openSafe then
-                    openSafe:FireServer("Completed")
-                end
+                if openSafe then openSafe:FireServer("Completed") end
                 robEvent:FireServer("Safe", sData.model)
             end
         end)
@@ -560,13 +582,9 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
             return false
         end
         local reg = findNearestCashRegister()
-        if reg then
-            if attemptRegister(reg) then return true end
-        end
+        if reg then if attemptRegister(reg) then return true end end
         local s = findNearestSafe()
-        if s then
-            if attemptSafe(s) then return true end
-        end
+        if s then if attemptSafe(s) then return true end end
         return false
     end
 
@@ -643,11 +661,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
             TweenService:Create(txt, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
             disappearTween.Completed:Wait()
             frame:Destroy()
-            for i = #activeNotifiers, 1, -1 do
-                if activeNotifiers[i] and activeNotifiers[i].frame == frame then
-                    table.remove(activeNotifiers, i)
-                end
-            end
+            for i = #activeNotifiers, 1, -1 do if activeNotifiers[i] and activeNotifiers[i].frame == frame then table.remove(activeNotifiers, i) end end
             repositionNotifiers()
         end)
     end
@@ -771,14 +785,8 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
         local currentTween
         MainFrame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                dragStart = input.Position
-                startPos = MainFrame.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
+                dragging = true dragStart = input.Position startPos = MainFrame.Position
+                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
             end
         end)
         MainFrame.InputChanged:Connect(function(input)
@@ -803,9 +811,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
         while true do
             task.wait(0.8)
             local perfStats = StatsService:FindFirstChild("PerformanceStats")
-            if perfStats and perfStats:FindFirstChild("Ping") then
-                PingLabel.Text = "Ping: " .. tostring(math.floor(perfStats.Ping:GetValue())) .. "ms"
-            end
+            if perfStats and perfStats:FindFirstChild("Ping") then PingLabel.Text = "Ping: " .. tostring(math.floor(perfStats.Ping:GetValue())) .. "ms" end
         end
     end)
 
@@ -840,9 +846,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
         notify("AutoFarm started — Diablo & Westbound", 2.5)
         farmThread = coroutine.create(function()
             while getgenv().AutoFarmActive do
-                local ok = pcall(function()
-                    farmOnce()
-                end)
+                local ok = pcall(function() farmOnce() end)
                 task.wait(FAST_LOOP_INTERVAL)
             end
         end)
@@ -857,10 +861,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
     end
 
     local function stopFarming()
-        if not getgenv().AutoFarmActive then
-            resetProgress()
-            return
-        end
+        if not getgenv().AutoFarmActive then resetProgress() return end
         getgenv().AutoFarmActive = false
         StatusLabel.Text = "Status: Stopped"
         notify("AutoFarm stopped", 1.8)
@@ -880,12 +881,7 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
         end
     end)
 
-    AutoFarmUI.AncestryChanged:Connect(function(_, parent)
-        if not parent then
-            getgenv().AutoFarmActive = false
-            resetProgress()
-        end
-    end)
+    AutoFarmUI.AncestryChanged:Connect(function(_, parent) if not parent then getgenv().AutoFarmActive = false resetProgress() end end)
 
     localPlayer.CharacterAdded:Connect(function(char)
         character = char
@@ -893,18 +889,19 @@ AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Source Integrated",
         humanoidRootPart = character:WaitForChild("HumanoidRootPart")
         ensureAntiDeath(character)
     end)
-    -- [ FIM DO CODIGO DIABLO HUB ]
 end)
 
 -- [[ DISCORD ]] --
-AddScriptButton(DiscordTab, "TRXSH COMMUNITY", "Join for updates", "", "Copy", function() setclipboard(Settings.DiscordLink) end)
+AddScriptButton(DiscordTab, "TRXSH COMMUNITY", "Join for latest updates", "", "Copy", function() 
+	if setclipboard then setclipboard(Settings.DiscordLink) end 
+end)
 
 -- [[ CREDITS ]] --
 AddScriptButton(CreditsTab, "DEVELOPER", "Created by: henriqsz7", "Panel Owner", nil, nil)
-AddScriptButton(CreditsTab, "LEGAL", "Rights reserved to henriqsz7", "", nil, nil)
-AddScriptButton(CreditsTab, "VERSION", "3.1.0", "Status: Stable", nil, nil)
+AddScriptButton(CreditsTab, "LEGAL", "Rights reserved to henriqsz7", "Full Control", nil, nil)
+AddScriptButton(CreditsTab, "VERSION", "3.1.0", "", nil, nil)
 
--- [[ CONFIGURAÇÕES (REATIVADO) ]] --
+-- [[ SETTINGS ]] --
 local AutoExeBtn = AddBasicButton(ConfigTab, "Auto Execute: OFF", function()
 	Settings.AutoExecute = not Settings.AutoExecute
 	AutoExeBtn.Text = "Auto Execute: " .. (Settings.AutoExecute and "ON" or "OFF")
@@ -917,21 +914,59 @@ BindBtn.MouseButton1Click:Connect(function()
 	BindBtn.Text = "..." 
 end)
 
--- [[ SISTEMA DE LOGIN ]] --
-local _K1 = "7b806f90-6d7e-4ea5-939e-be698aa6e629"
-local _KA = "henriqsz"
+-- [[ SISTEMA DE LOGIN COM WHITELIST HWID ]] --
+local _K1 = "7b806f90-6d7e-4ea5-939e-be698aa6e629" -- Key Comum (24h)
+local _KA = "henriqsz7" -- Sua Key Mestra
+
+-- VOCÊ PRECISA COLOCAR O SEU ID AQUI PARA A KEY MESTRA FUNCIONAR
+-- Execute o script uma vez e veja o seu ID no Console do Roblox (F9)
+local MyPrivateID = "COLOQUE_SEU_ID_AQUI" 
 
 AuthBtn.MouseButton1Click:Connect(function()
-	if KeyInput.Text == _K1 or KeyInput.Text == _KA then
-		SmoothTween(KeyFrame, 0.5, {Position = UDim2.new(0.5, -180, -1, 0)})
-		task.wait(0.5)
-		KeyFrame.Visible = false
-		MainHub.Visible = true
-	else
-		KeyInput.Text = ""
-		KeyInput.PlaceholderText = "WRONG KEY!"
-	end
+    local input = KeyInput.Text
+    local currentHardware = RbxAnalyticsService:GetClientId()
+    
+    local authenticated = false
+
+    -- 1. Verifica se é a sua Key Mestra e se é o SEU computador
+    if input == _KA then
+        if currentHardware == MyPrivateID then
+            authenticated = true
+        else
+            KeyInput.Text = ""
+            KeyInput.PlaceholderText = "UNAUTHORIZED DEVICE!"
+        end
+    -- 2. Verifica se é a Key comum de 24h
+    elseif input == _K1 then
+        authenticated = true
+    end
+
+    if authenticated then
+        SmoothTween(KeyFrame, 0.6, {Position = UDim2.new(0.5, -180, -1, 0), BackgroundTransparency = 1})
+        task.wait(0.6)
+        KeyFrame.Visible = false
+        MainHub.Visible = true
+        MainHub.Size = UDim2.new(0, 0, 0, 0)
+        SmoothTween(MainHub, 0.5, {Size = UDim2.new(0, 700, 0, 450)})
+    else
+        -- Efeito de Erro
+        if KeyInput.PlaceholderText ~= "UNAUTHORIZED DEVICE!" then
+            KeyInput.Text = ""
+            KeyInput.PlaceholderText = "WRONG KEY!"
+        end
+        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -175, 0.5, -140)})
+        task.wait(0.1)
+        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -185, 0.5, -140)})
+        task.wait(0.1)
+        SmoothTween(KeyFrame, 0.1, {Position = UDim2.new(0.5, -180, 0.5, -140)})
+    end
 end)
+
+-- COMANDO PARA VOCÊ DESCOBRIR SEU ID (Aparece no F9)
+print("------------------------------------------")
+print("SEU ID ÚNICO: " .. RbxAnalyticsService:GetClientId())
+print("COPIE O ID ACIMA E COLOQUE NA VARIAVEL 'MyPrivateID' NO SCRIPT")
+print("------------------------------------------")
 
 GetKeyBtn.MouseButton1Click:Connect(function()
 	if setclipboard then setclipboard("https://work.ink/24Qe/key") end
@@ -949,4 +984,4 @@ UserInputService.InputBegan:Connect(function(input)
 	end
 end)
 
-print("TRXSH HUB V3.1.0 - ALL SCRIPTS LOADED")
+print("TRXSH HUB V3.1.0 - WHITELIST SYSTEM ACTIVE")
