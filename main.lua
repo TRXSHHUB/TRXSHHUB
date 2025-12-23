@@ -1,4 +1,4 @@
--- [[ TRXSH HUB V3 - FULL SOURCE ]] --
+-- [[ TRXSH HUB V3.9.0 - FINAL PERFORMANCE & FIXES ]] --
 -- [[ CREATED BY HENRIQSZ7 ]] --
 
 local Player = game:GetService("Players").LocalPlayer
@@ -6,9 +6,10 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+local Lighting = game:GetService("Lighting")
+local Camera = workspace.CurrentCamera
 
 -- [[ IDENTIFICADOR PRIVADO ]] --
 local CurrentDeviceID = RbxAnalyticsService:GetClientId() 
@@ -19,7 +20,9 @@ local _U = {
     CLOUD = "https://raw.githubusercontent.com/cloudman4416/scripts/main/Loader.lua",
     FIRE = "https://raw.githubusercontent.com/projectslayersf/FireHub/main/Loader.lua",
     FROST = "https://raw.githubusercontent.com/cattercatty/Scripts/main/Loader.lua",
-    IY = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"
+    IY = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
+    WEST = "https://raw.githubusercontent.com/TRXSH-DMN/TRXSH-HUB-WESTBOUND/refs/heads/main/main.lua",
+    AIM_UNIVERSAL = "https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Aimbot%20V2%20GUI.lua"
 }
 
 local TargetParent = (gethui and gethui()) or (CoreGui:FindFirstChild("RobloxGui") and CoreGui.RobloxGui) or PlayerGui
@@ -29,7 +32,6 @@ if TargetParent:FindFirstChild("TRXSH_HUB_V3_ULTIMATE") then
 end
 
 local TRXSH_HUB = Instance.new("ScreenGui")
--- Definindo ZIndex alto para não ficar atrás de outras UIs
 TRXSH_HUB.Name = "TRXSH_HUB_V3_ULTIMATE"
 TRXSH_HUB.Parent = TargetParent
 TRXSH_HUB.ResetOnSpawn = false
@@ -39,12 +41,30 @@ local Settings = {
 	AutoExecute = false,
 	HideKey = Enum.KeyCode.LeftControl,
 	IsVisible = true,
-	DiscordLink = "https://discord.gg/3JSw8fDQbu",
+	DiscordLink = "https://discord.gg/D84MJ2rHSp",
 	AccentColor = Color3.fromRGB(90, 50, 200),
-	SecondaryColor = Color3.fromRGB(15, 15, 18)
+	SecondaryColor = Color3.fromRGB(15, 15, 18),
+    RainbowUI = false,
+    PerformanceMode = false
 }
 
--- [[ FUNÇÕES DO PAINEL ]] --
+-- [[ VARIÁVEIS DE ESTADO ]] --
+getgenv().EspNameEnabled = false
+getgenv().EspCorpoEnabled = false
+getgenv().AimbotEnabled = false
+getgenv().AimbotKey = Enum.KeyCode.E
+getgenv().AimbotFOV = 150
+getgenv().AimbotSmoothing = 0.15
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1
+FOVCircle.NumSides = 60
+FOVCircle.Radius = getgenv().AimbotFOV
+FOVCircle.Filled = false
+FOVCircle.Visible = false
+FOVCircle.Color = Settings.AccentColor
+
+-- [[ FUNÇÕES AUXILIARES ]] --
 local function ExecuteScript(url)
     local success, content = pcall(function() return game:HttpGet(url) end)
     if success then
@@ -92,7 +112,102 @@ local function MakeDraggable(frame)
 	UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
--- [[ UI ELEMENTS ]] --
+-- [[ LÓGICA DE ESP OTIMIZADA PARA ZERO LAG ]] --
+local function UpdateEsp()
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= Player and plr.Character then
+            local char = plr.Character
+            
+            local existingName = char:FindFirstChild("TrxshName")
+            if getgenv().EspNameEnabled then
+                if not existingName then
+                    local head = char:FindFirstChild("Head")
+                    if head then
+                        local billboard = Instance.new("BillboardGui")
+                        billboard.Name = "TrxshName"
+                        billboard.AlwaysOnTop = true
+                        billboard.Size = UDim2.new(0, 100, 0, 20)
+                        billboard.Adornee = head
+                        billboard.StudsOffset = Vector3.new(0, 3, 0)
+                        billboard.Parent = char
+
+                        local label = Instance.new("TextLabel")
+                        label.BackgroundTransparency = 1
+                        label.Size = UDim2.new(1, 0, 1, 0)
+                        label.Text = plr.Name
+                        label.Font = Enum.Font.GothamBold
+                        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        label.TextSize = 12
+                        label.Parent = billboard
+                    end
+                end
+            else
+                if existingName then existingName:Destroy() end
+            end
+
+            local existingBody = char:FindFirstChild("TrxshEspCorpo")
+            if getgenv().EspCorpoEnabled then
+                if not existingBody then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "TrxshEspCorpo"
+                    highlight.FillColor = Settings.AccentColor
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.Parent = char
+                end
+            else
+                if existingBody then existingBody:Destroy() end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.5) do
+        UpdateEsp()
+    end
+end)
+
+-- [[ SISTEMA DE AIMBOT WESTBOUND FIX ]] --
+local function GetClosestPlayer()
+    local closest = nil
+    local shortestDistance = getgenv().AimbotFOV
+    local mouseLocation = UserInputService:GetMouseLocation()
+
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local distance = (Vector2.new(pos.X, pos.Y) - mouseLocation).Magnitude
+                if distance < shortestDistance then
+                    closest = v
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+    return closest
+end
+
+RunService.RenderStepped:Connect(function()
+    if getgenv().AimbotEnabled then
+        FOVCircle.Visible = true
+        FOVCircle.Position = UserInputService:GetMouseLocation()
+        
+        if UserInputService:IsKeyDown(getgenv().AimbotKey) then
+            local target = GetClosestPlayer()
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local targetPart = target.Character.HumanoidRootPart
+                local targetPos = targetPart.Position
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), getgenv().AimbotSmoothing)
+            end
+        end
+    else
+        FOVCircle.Visible = false
+    end
+end)
+
+-- [[ UI - KEY SYSTEM ]] --
 local KeyFrame = Instance.new("Frame")
 KeyFrame.Name = "KeyFrame"
 KeyFrame.Parent = TRXSH_HUB
@@ -162,6 +277,7 @@ ApplyHover(GetKeyBtn, Color3.fromRGB(25, 25, 30), Color3.fromRGB(35, 35, 40))
 
 MakeDraggable(KeyFrame)
 
+-- [[ MAIN HUB ]] --
 local MainHub = Instance.new("Frame")
 MainHub.Name = "MainHub"
 MainHub.Parent = TRXSH_HUB
@@ -202,33 +318,6 @@ Logo.Font = Enum.Font.Michroma
 Logo.Text = "TRXSH HUB"
 Logo.TextColor3 = Settings.AccentColor
 Logo.TextSize = 18
-
-local UserProfile = Instance.new("Frame")
-UserProfile.Name = "UserProfile"
-UserProfile.Parent = SideMenu
-UserProfile.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-UserProfile.Position = UDim2.new(0, 10, 1, -60)
-UserProfile.Size = UDim2.new(0, 160, 0, 50)
-Instance.new("UICorner", UserProfile).CornerRadius = UDim.new(0, 8)
-
-local UserImage = Instance.new("ImageLabel")
-UserImage.Parent = UserProfile
-UserImage.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-UserImage.Position = UDim2.new(0, 5, 0, 5)
-UserImage.Size = UDim2.new(0, 40, 0, 40)
-UserImage.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. Player.UserId .. "&width=420&height=420&format=png"
-Instance.new("UICorner", UserImage).CornerRadius = UDim.new(1, 0)
-
-local UserName = Instance.new("TextLabel")
-UserName.Parent = UserProfile
-UserName.Position = UDim2.new(0, 50, 0, 5)
-UserName.Size = UDim2.new(0, 100, 0, 40)
-UserName.BackgroundTransparency = 1
-UserName.Font = Enum.Font.GothamBold
-UserName.Text = Player.DisplayName or Player.Name
-UserName.TextColor3 = Color3.fromRGB(255, 255, 255)
-UserName.TextSize = 12
-UserName.TextXAlignment = Enum.TextXAlignment.Left
 
 local TabList = Instance.new("ScrollingFrame")
 TabList.Parent = SideMenu
@@ -280,11 +369,7 @@ local function CreateTab(name, layoutOrder)
 
 	TabBtn.MouseButton1Click:Connect(function()
 		for _, p in pairs(ContentArea:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
-		for _, b in pairs(TabList:GetChildren()) do 
-			if b:IsA("TextButton") then 
-				SmoothTween(b, 0.3, {BackgroundColor3 = Color3.fromRGB(20, 20, 24), TextColor3 = Color3.fromRGB(150, 150, 150)})
-			end 
-		end
+		for _, b in pairs(TabList:GetChildren()) do if b:IsA("TextButton") then SmoothTween(b, 0.3, {BackgroundColor3 = Color3.fromRGB(20, 20, 24), TextColor3 = Color3.fromRGB(150, 150, 150)}) end end
 		Page.Visible = true
 		SmoothTween(TabBtn, 0.3, {BackgroundColor3 = Settings.AccentColor, TextColor3 = Color3.fromRGB(255, 255, 255)})
 	end)
@@ -309,10 +394,11 @@ local function AddBasicButton(page, name, callback)
 	return Btn
 end
 
-local function AddScriptButton(page, name, line1, line2, btnText, callback)
+local function AddScriptButton(page, name, line1, line2, btnText, callback, specialLine, descColor)
 	local Container = Instance.new("Frame")
 	Container.Parent = page
-	Container.Size = UDim2.new(0.95, 0, 0, 70)
+    local containerHeight = specialLine and 110 or 75
+	Container.Size = UDim2.new(0.95, 0, 0, containerHeight)
 	Container.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 	Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 6)
 	local CS = Instance.new("UIStroke", Container)
@@ -337,7 +423,7 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	Desc1.BackgroundTransparency = 1
 	Desc1.Font = Enum.Font.Gotham
 	Desc1.Text = line1
-	Desc1.TextColor3 = Color3.fromRGB(150, 150, 150)
+	Desc1.TextColor3 = descColor or Color3.fromRGB(150, 150, 150)
 	Desc1.TextSize = 11
 	Desc1.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -348,25 +434,56 @@ local function AddScriptButton(page, name, line1, line2, btnText, callback)
 	Desc2.BackgroundTransparency = 1
 	Desc2.Font = Enum.Font.GothamMedium
 	Desc2.Text = line2
-    if string.find(string.upper(line2), "PATCHED") then
-        Desc2.TextColor3 = Color3.fromRGB(255, 60, 60)
-    else
-	    Desc2.TextColor3 = Color3.fromRGB(200, 60, 60)
+    Desc2.TextColor3 = (line2 == "PATCHED" or line2 == "Needs Key" or line2 == "Latest Version" or line2 == "OPTIMIZED FOR WESTBOUND" or line2 == "Universal" or line2 == "BY HENRIQSZ7") and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(150, 150, 150)
+    
+    -- Ajuste específico para o texto branco do Universal
+    if name == "AIMBOT + ESP" and line2 == "Universal" then
+        Desc1.TextColor3 = Color3.fromRGB(255, 255, 255)
     end
+
 	Desc2.TextXAlignment = Enum.TextXAlignment.Left
+    
+    if specialLine then
+        local Desc3 = Instance.new("TextLabel")
+        Desc3.Parent = Container
+        Desc3.Size = UDim2.new(1, -15, 0, 40)
+        Desc3.Position = UDim2.new(0, 10, 0, 63)
+        Desc3.BackgroundTransparency = 1
+        Desc3.Font = Enum.Font.GothamBold
+        Desc3.Text = specialLine
+        Desc3.TextColor3 = Color3.fromRGB(255, 50, 50)
+        Desc3.TextSize = 10
+        Desc3.TextXAlignment = Enum.TextXAlignment.Left
+        Desc3.TextWrapped = true
+    end
 
 	if btnText then
 		local ExecBtn = Instance.new("TextButton")
 		ExecBtn.Parent = Container
-		ExecBtn.Size = UDim2.new(0, 80, 0, 30)
-		ExecBtn.Position = UDim2.new(1, -90, 0.5, -15)
+		ExecBtn.Size = UDim2.new(0, 85, 0, 32)
+		ExecBtn.Position = UDim2.new(1, -95, 0, 20)
 		ExecBtn.BackgroundColor3 = Settings.AccentColor
 		ExecBtn.Text = btnText
 		ExecBtn.Font = Enum.Font.GothamBold
 		ExecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 		ExecBtn.TextSize = 12
 		Instance.new("UICorner", ExecBtn).CornerRadius = UDim.new(0, 4)
-		ExecBtn.MouseButton1Click:Connect(callback)
+        local ES = Instance.new("UIStroke", ExecBtn)
+        ES.Color = Color3.fromRGB(255,255,255)
+        ES.Transparency = 0.8
+		ExecBtn.MouseButton1Click:Connect(function()
+            if btnText == "Copy Link" then
+                callback()
+                ExecBtn.Text = "COPIED!"
+                ExecBtn.TextColor3 = Color3.fromRGB(100, 255, 100)
+                task.wait(2)
+                ExecBtn.Text = "Copy Link"
+                ExecBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                callback()
+            end
+        end)
+        ApplyHover(ExecBtn, Settings.AccentColor, Color3.fromRGB(110, 70, 220), ES)
 	end
 end
 
@@ -378,575 +495,112 @@ local ConfigTab = CreateTab("SETTINGS", 99)
 local DiscordTab = CreateTab("DISCORD", 100)
 local CreditsTab = CreateTab("CREDITS", 101)
 
+-- [[ ABA SLAYERS ]] --
 AddScriptButton(ProjectSlayers, "FROSTIES HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.FROST) end)
 AddScriptButton(ProjectSlayers, "CLOUD HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.CLOUD) end)
 AddScriptButton(ProjectSlayers, "FIRE HUB", "Auto farm everything", "PATCHED", "Execute", function() ExecuteScript(_U.FIRE) end)
+
+-- [[ ABA WESTBOUND ]] --
+AddScriptButton(WestBound, "TRXSH HUB", "Auto farm money", "Latest Version", "Execute", function() ExecuteScript(_U.WEST) end, "YOU NEED TO EXECUTE BEFORE SPAWNING.")
+AddScriptButton(WestBound, "ESP NAME INFO", "See names through walls", "BY HENRIQSZ7", "Execute", function() getgenv().EspNameEnabled = not getgenv().EspNameEnabled end)
+AddScriptButton(WestBound, "ESP CORPO", "Highlight player bodies", "BY HENRIQSZ7", "Execute", function() getgenv().EspCorpoEnabled = not getgenv().EspCorpoEnabled end)
+AddScriptButton(WestBound, "AIMBOT (FIXED)", "Lock-on Body (Key: E)", "BY HENRIQSZ7", "Execute", function() getgenv().AimbotEnabled = not getgenv().AimbotEnabled end)
+
+-- [[ ABA UNIVERSAL ]] --
+AddScriptButton(Universal, "AIMBOT + ESP", "Works in almost all games", "Universal", "Execute", function() ExecuteScript(_U.AIM_UNIVERSAL) end)
 AddScriptButton(Universal, "INFINITE YIELD", "Universal script commands", "", "Execute", function() ExecuteScript(_U.IY) end)
 
--- [[ INTEGRAÇÃO DIABLO HUB ]] --
-AddScriptButton(WestBound, "DIABLO HUB", "Auto farm money", "Made by Diablo", "Execute", function()
-    -- CÓDIGO ORIGINAL DO DIABLO (SEM ALTERAÇÕES)
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local RunService = game:GetService("RunService")
-    local TweenService = game:GetService("TweenService")
-    local UserInputService = game:GetService("UserInputService")
+-- [[ SETTINGS ]] --
+AddBasicButton(ConfigTab, "Full Bright", function() Lighting.Brightness = 2 Lighting.ClockTime = 14 Lighting.GlobalShadows = false end)
+AddBasicButton(ConfigTab, "Unlock FPS", function() if setfpscap then setfpscap(999) end end)
+AddBasicButton(ConfigTab, "Rejoin Server", function() game:GetService("TeleportService"):Teleport(game.PlaceId, Player) end)
+AddBasicButton(ConfigTab, "Anti-Afk", function() 
     local VirtualUser = game:GetService("VirtualUser")
-    local StatsService = game:GetService("Stats")
-    local SoundService = game:GetService("SoundService")
-    local localPlayer = Players.LocalPlayer
-    local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    local bag = localPlayer:WaitForChild("States"):WaitForChild("Bag")
-    local bagSizeLevel = localPlayer:WaitForChild("Stats"):WaitForChild("BagSizeLevel"):WaitForChild("CurrentAmount")
-    local robEvent = ReplicatedStorage:WaitForChild("GeneralEvents"):WaitForChild("Rob")
-    local targetPosition = CFrame.new(1636.62537, 104.349976, -1736.184)
+    Player.Idled:Connect(function() VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new()) end)
+end)
 
-    local function ensureAntiDeath(char)
-        local ok, h = pcall(function()
-            local hum = char:FindFirstChildWhichIsA("Humanoid")
-            if not hum then return end
-            local cloned = hum:Clone()
-            cloned.Parent = char
-            localPlayer.Character = nil
-            cloned:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-            cloned:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-            cloned:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-            hum:Destroy()
-            localPlayer.Character = char
-            local cam = Workspace.CurrentCamera
-            cam.CameraSubject = cloned
-            cam.CFrame = cam.CFrame
-            cloned.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-            local animate = char:FindFirstChild("Animate")
-            if animate then
-                animate.Disabled = true
-                task.wait(0.07)
-                animate.Disabled = false
-            end
-            cloned.Health = cloned.MaxHealth
-            humanoid = cloned
-            humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
-        end)
-        return ok
-    end
+AddBasicButton(ConfigTab, "Auto Execute: " .. (Settings.AutoExecute and "ON" or "OFF"), function(btn)
+    Settings.AutoExecute = not Settings.AutoExecute
+    btn.Text = "Auto Execute: " .. (Settings.AutoExecute and "ON" or "OFF")
+end)
 
-    ensureAntiDeath(character)
-
-    localPlayer.Idled:Connect(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
-
-    if getgenv().AntiAfkExecuted and game.CoreGui:FindFirstChild("DiabloAutoFarmUI") then
-        getgenv().AntiAfkExecuted = false
-        getgenv().AutoFarmActive = false
-        game.CoreGui.DiabloAutoFarmUI:Destroy()
-    end
-
-    getgenv().AntiAfkExecuted = true
-    getgenv().AutoFarmActive = false
-
-    local FAST_LOOP_INTERVAL = 0.08
-
-    local function formatNumber(n)
-        local s = tostring(n)
-        while true do
-            local k
-            s, k = string.gsub(s, "^(-?%d+)(%d%d%d)", "%1,%2")
-            if k == 0 then break end
+AddBasicButton(ConfigTab, "Change Hide Key (Bind)", function(btn)
+    btn.Text = "Press any key..."
+    local connection
+    connection = UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            Settings.HideKey = input.KeyCode
+            btn.Text = "Hide Key: " .. input.KeyCode.Name
+            connection:Disconnect()
         end
-        return s
-    end
-
-    local cashRegisters = {}
-    local safes = {}
-
-    local function clearTable(t)
-        for i = 1, #t do t[i] = nil end
-    end
-
-    local function updateCaches()
-        clearTable(cashRegisters)
-        clearTable(safes)
-        for _, child in ipairs(Workspace:GetChildren()) do
-            if child:IsA("Model") then
-                if child.Name == "CashRegister" then
-                    table.insert(cashRegisters, child)
-                elseif child.Name == "Safe" then
-                    table.insert(safes, child)
-                end
-            end
-        end
-    end
-
-    updateCaches()
-
-    Workspace.ChildAdded:Connect(function(child)
-        if child:IsA("Model") then
-            if child.Name == "CashRegister" then
-                table.insert(cashRegisters, child)
-            elseif child.Name == "Safe" then
-                table.insert(safes, child)
-            end
-        end
-    end)
-
-    Workspace.ChildRemoved:Connect(function(child)
-        if child:IsA("Model") then
-            if child.Name == "CashRegister" then
-                for i = #cashRegisters, 1, -1 do
-                    if cashRegisters[i] == child then table.remove(cashRegisters, i) end
-                end
-            elseif child.Name == "Safe" then
-                for i = #safes, 1, -1 do
-                    if safes[i] == child then table.remove(safes, i) end
-                end
-            end
-        end
-    end)
-
-    local function moveTo(cf)
-        if humanoidRootPart and cf then
-            humanoidRootPart.CFrame = cf
-        end
-    end
-
-    local function findNearestCashRegister()
-        if not humanoidRootPart then return nil end
-        local best, bestDist = nil, math.huge
-        for _, reg in ipairs(cashRegisters) do
-            if reg and reg.Parent and reg:IsDescendantOf(Workspace) then
-                local openPart = reg:FindFirstChild("Open")
-                if openPart then
-                    local d = (humanoidRootPart.Position - openPart.Position).Magnitude
-                    if d < bestDist then
-                        bestDist = d
-                        best = {model = reg, openPart = openPart}
-                    end
-                end
-            end
-        end
-        return best
-    end
-
-    local function findNearestSafe()
-        if not humanoidRootPart then return nil end
-        local best, bestDist = nil, math.huge
-        for _, s in ipairs(safes) do
-            if s and s.Parent and s:IsDescendantOf(Workspace) and s:FindFirstChild("Amount") and s.Amount.Value > 0 then
-                local safePart = s:FindFirstChild("Safe")
-                if safePart then
-                    local d = (humanoidRootPart.Position - safePart.Position).Magnitude
-                    if d < bestDist then
-                        bestDist = d
-                        best = {model = s, safePart = safePart}
-                    end
-                end
-            end
-        end
-        return best
-    end
-
-    local function attemptRegister(regData)
-        if not regData or not regData.model then return false end
-        local ok = pcall(function()
-            moveTo(regData.openPart.CFrame)
-            robEvent:FireServer("Register", {
-                Part = regData.model:FindFirstChild("Union"),
-                OpenPart = regData.openPart,
-                ActiveValue = regData.model:FindFirstChild("Active"),
-                Active = true
-            })
-        end)
-        return ok
-    end
-
-    local function attemptSafe(sData)
-        if not sData or not sData.model then return false end
-        local ok = pcall(function()
-            moveTo(sData.safePart.CFrame)
-            local openFlag = sData.model:FindFirstChild("Open")
-            if openFlag and openFlag.Value then
-                robEvent:FireServer("Safe", sData.model)
-            else
-                local openSafe = sData.model:FindFirstChild("OpenSafe")
-                if openSafe then
-                    openSafe:FireServer("Completed")
-                end
-                robEvent:FireServer("Safe", sData.model)
-            end
-        end)
-        return ok
-    end
-
-    local function farmOnce()
-        if bag.Value >= bagSizeLevel.Value then
-            moveTo(targetPosition)
-            return false
-        end
-        local reg = findNearestCashRegister()
-        if reg then
-            if attemptRegister(reg) then return true end
-        end
-        local s = findNearestSafe()
-        if s then
-            if attemptSafe(s) then return true end
-        end
-        return false
-    end
-
-    local function createNotifierGUI()
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "DiabloNotifier"
-        gui.ResetOnSpawn = false
-        gui.Parent = game.CoreGui
-        local container = Instance.new("Frame")
-        container.Name = "Container"
-        container.AnchorPoint = Vector2.new(0.5, 0)
-        container.Position = UDim2.new(0.5, 0, 0, 6)
-        container.Size = UDim2.new(0, 380, 0, 0)
-        container.BackgroundTransparency = 1
-        container.Parent = gui
-        return gui, container
-    end
-
-    local notifierGui, notifierContainer = createNotifierGUI()
-    local activeNotifiers = {}
-
-    local function repositionNotifiers()
-        for i, v in ipairs(activeNotifiers) do
-            if v and v.frame then
-                local targetY = 6 + (i - 1) * 56
-                TweenService:Create(v.frame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0, targetY)}):Play()
-            end
-        end
-    end
-
-    local function notify(text, timeSec)
-        timeSec = timeSec or 3
-        if not notifierContainer or notifierContainer.Parent == nil then
-            notifierGui, notifierContainer = createNotifierGUI()
-        end
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 340, 0, 50)
-        frame.Position = UDim2.new(0.5, 0, 0, -60)
-        frame.AnchorPoint = Vector2.new(0.5, 0)
-        frame.BackgroundTransparency = 1
-        frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        frame.BorderSizePixel = 0
-        frame.Parent = notifierContainer
-        local uic = Instance.new("UICorner", frame)
-        uic.CornerRadius = UDim.new(0, 10)
-        local uistroke = Instance.new("UIStroke", frame)
-        uistroke.Thickness = 1
-        uistroke.Color = Color3.fromRGB(100, 100, 100)
-        uistroke.Transparency = 0.5
-        local txt = Instance.new("TextLabel", frame)
-        txt.Size = UDim2.new(1, -20, 1, 0)
-        txt.Position = UDim2.new(0, 10, 0, 0)
-        txt.BackgroundTransparency = 1
-        txt.Text = tostring(text)
-        txt.Font = Enum.Font.GothamBold
-        txt.TextSize = 16
-        txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-        txt.TextXAlignment = Enum.TextXAlignment.Left
-        txt.TextTransparency = 1
-        local snd = Instance.new("Sound", frame)
-        snd.SoundId = "rbxassetid://3442983711"
-        snd.Volume = 1
-        snd.PlayOnRemove = false
-        snd:Play()
-        table.insert(activeNotifiers, {frame = frame})
-        repositionNotifiers()
-        local appearTween = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 0, 6 + (#activeNotifiers - 1) * 56), BackgroundTransparency = 0})
-        appearTween:Play()
-        TweenService:Create(txt, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-        spawn(function()
-            task.wait(timeSec)
-            local disappearTween = TweenService:Create(frame, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, 0, 0, -60), BackgroundTransparency = 1})
-            disappearTween:Play()
-            TweenService:Create(txt, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
-            disappearTween.Completed:Wait()
-            frame:Destroy()
-            for i = #activeNotifiers, 1, -1 do
-                if activeNotifiers[i] and activeNotifiers[i].frame == frame then
-                    table.remove(activeNotifiers, i)
-                end
-            end
-            repositionNotifiers()
-        end)
-    end
-
-    local AutoFarmUI = Instance.new("ScreenGui")
-    AutoFarmUI.Name = "DiabloAutoFarmUI"
-    AutoFarmUI.Parent = game.CoreGui
-    AutoFarmUI.ResetOnSpawn = false
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 320, 0, 160)
-    MainFrame.Position = UDim2.new(0.5, -160, 0.5, -80)
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.BackgroundTransparency = 0
-    MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Parent = AutoFarmUI
-    local MainCorner = Instance.new("UICorner", MainFrame)
-    MainCorner.CornerRadius = UDim.new(0, 14)
-    local Accent = Instance.new("Frame", MainFrame)
-    Accent.Size = UDim2.new(1, 0, 0, 40)
-    Accent.Position = UDim2.new(0, 0, 0, 0)
-    Accent.BackgroundTransparency = 0
-    Accent.BackgroundColor3 = Color3.fromRGB(45, 10, 90)
-    Accent.BorderSizePixel = 0
-    local g = Instance.new("UIGradient", Accent)
-    g.Color = ColorSequence.new{ ColorSequenceKeypoint.new(0, Color3.fromRGB(120, 25, 200)), ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 10, 140)) }
-    g.Rotation = 45
-    local Title = Instance.new("TextLabel", Accent)
-    Title.Size = UDim2.new(0.75, 0, 1, 0)
-    Title.Position = UDim2.new(0.02, 0, 0, 0)
-    Title.BackgroundTransparency = 1
-    Title.Text = "Diablo Hub W.B"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.Font = Enum.Font.GothamBlack
-    Title.TextSize = 14
-    Title.TextXAlignment = Enum.TextXAlignment.Left
-    local credit = Instance.new("TextLabel", Accent)
-    credit.Size = UDim2.new(0.23, -10, 1, 0)
-    credit.Position = UDim2.new(0.75, 0, 0, 0)
-    credit.BackgroundTransparency = 1
-    credit.Text = "Made by Diablo"
-    credit.TextColor3 = Color3.fromRGB(200, 200, 200)
-    credit.Font = Enum.Font.Gotham
-    credit.TextSize = 12
-    credit.TextXAlignment = Enum.TextXAlignment.Right
-    local content = Instance.new("Frame", MainFrame)
-    content.Size = UDim2.new(1, -16, 1, -56)
-    content.Position = UDim2.new(0, 8, 0, 48)
-    content.BackgroundTransparency = 1
-    local contentCorner = Instance.new("UICorner", content)
-    contentCorner.CornerRadius = UDim.new(0, 12)
-    local statsList = Instance.new("Frame", content)
-    statsList.Size = UDim2.new(0.6, 0, 1, 0)
-    statsList.Position = UDim2.new(0, 0, 0, 0)
-    statsList.BackgroundTransparency = 1
-    local function makeStatLabel(txt, y)
-        local lbl = Instance.new("TextLabel", statsList)
-        lbl.Size = UDim2.new(1, 0, 0, 18)
-        lbl.Position = UDim2.new(0, 0, 0, y)
-        lbl.BackgroundTransparency = 1
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.Font = Enum.Font.Gotham
-        lbl.TextSize = 13
-        lbl.TextColor3 = Color3.fromRGB(230, 230, 230)
-        lbl.Text = txt
-        return lbl
-    end
-    local PingLabel = makeStatLabel("Ping: Calculating...", 0)
-    local CashLabel = makeStatLabel("Earnings: $0", 22)
-    local FPSLabel = makeStatLabel("FPS: Calculating...", 44)
-    local TimerLabel = makeStatLabel("Time: 00:00:00", 66)
-    local StatusLabel = makeStatLabel("Status: Stopped", 88)
-    local controls = Instance.new("Frame", content)
-    controls.Size = UDim2.new(0.4, 0, 1, 0)
-    controls.Position = UDim2.new(0.6, 0, 0, 0)
-    controls.BackgroundTransparency = 1
-    local StartBtn = Instance.new("TextButton", controls)
-    StartBtn.Size = UDim2.new(1, -10, 0, 36)
-    StartBtn.Position = UDim2.new(0, 5, 0, 0)
-    StartBtn.Text = "START"
-    StartBtn.Font = Enum.Font.GothamBlack
-    StartBtn.TextSize = 14
-    StartBtn.TextColor3 = Color3.fromRGB(20, 20, 20)
-    StartBtn.BackgroundColor3 = Color3.fromRGB(120, 25, 200)
-    StartBtn.AutoButtonColor = true
-    StartBtn.BorderSizePixel = 0
-    local StartCorner = Instance.new("UICorner", StartBtn)
-    StartCorner.CornerRadius = UDim.new(0, 8)
-    local StopBtn = Instance.new("TextButton", controls)
-    StopBtn.Size = UDim2.new(1, -10, 0, 28)
-    StopBtn.Position = UDim2.new(0, 5, 0, 44)
-    StopBtn.Text = "STOP"
-    StopBtn.Font = Enum.Font.GothamBold
-    StopBtn.TextSize = 13
-    StopBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
-    StopBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    StopBtn.AutoButtonColor = true
-    StopBtn.BorderSizePixel = 0
-    local StopCorner = Instance.new("UICorner", StopBtn)
-    StopCorner.CornerRadius = UDim.new(0, 8)
-    local pulse = Instance.new("Frame", Accent)
-    pulse.Size = UDim2.new(0, 10, 0, 10)
-    pulse.Position = UDim2.new(0.98, -20, 0.5, -5)
-    pulse.AnchorPoint = Vector2.new(1, 0.5)
-    pulse.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
-    pulse.BorderSizePixel = 0
-    local pulseCorner = Instance.new("UICorner", pulse)
-    pulseCorner.CornerRadius = UDim.new(0, 10)
-
-    spawn(function()
-        while AutoFarmUI.Parent and AutoFarmUI.Parent ~= nil do
-            TweenService:Create(pulse, TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {BackgroundTransparency = 0.3, Size = UDim2.new(0, 14, 0, 14)}):Play()
-            task.wait(1.8)
-        end
-    end)
-
-    do
-        local dragging, dragStart, startPos
-        local currentTween
-        MainFrame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                dragStart = input.Position
-                startPos = MainFrame.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-        MainFrame.InputChanged:Connect(function(input)
-            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = input.Position - dragStart
-                local target = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-                if currentTween then currentTween:Cancel() end
-                currentTween = TweenService:Create(MainFrame, TweenInfo.new(0.05, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = target})
-                currentTween:Play()
-            end
-        end)
-    end
-
-    spawn(function()
-        while true do
-            local dt = RunService.RenderStepped:Wait()
-            FPSLabel.Text = "FPS: " .. tostring(math.floor(1 / dt))
-        end
-    end)
-
-    spawn(function()
-        while true do
-            task.wait(0.8)
-            local perfStats = StatsService:FindFirstChild("PerformanceStats")
-            if perfStats and perfStats:FindFirstChild("Ping") then
-                PingLabel.Text = "Ping: " .. tostring(math.floor(perfStats.Ping:GetValue())) .. "ms"
-            end
-        end
-    end)
-
-    local leaderstats = localPlayer:WaitForChild("leaderstats")
-    local cashStat = leaderstats:WaitForChild("$$")
-    local initialCash = cashStat.Value
-    local seconds, minutes, hours = 0, 0, 0
-
-    spawn(function()
-        while true do
-            task.wait(0.9)
-            local earned = cashStat.Value - initialCash
-            CashLabel.Text = "Earnings: $" .. formatNumber(earned)
-        end
-    end)
-
-    spawn(function()
-        while true do
-            task.wait(1)
-            seconds = seconds + 1
-            if seconds >= 60 then seconds = 0 minutes = minutes + 1 end
-            if minutes >= 60 then minutes = 0 hours = hours + 1 end
-            TimerLabel.Text = string.format("Time: %02d:%02d:%02d", hours, minutes, seconds)
-        end
-    end)
-
-    local farmThread
-    local function startFarming()
-        if getgenv().AutoFarmActive then return end
-        getgenv().AutoFarmActive = true
-        StatusLabel.Text = "Status: Running"
-        notify("AutoFarm started — Diablo & Westbound", 2.5)
-        farmThread = coroutine.create(function()
-            while getgenv().AutoFarmActive do
-                local ok = pcall(function()
-                    farmOnce()
-                end)
-                task.wait(FAST_LOOP_INTERVAL)
-            end
-        end)
-        coroutine.resume(farmThread)
-    end
-
-    local function resetProgress()
-        initialCash = cashStat.Value
-        seconds, minutes, hours = 0, 0, 0
-        CashLabel.Text = "Earnings: $0"
-        TimerLabel.Text = "Time: 00:00:00"
-    end
-
-    local function stopFarming()
-        if not getgenv().AutoFarmActive then
-            resetProgress()
-            return
-        end
-        getgenv().AutoFarmActive = false
-        StatusLabel.Text = "Status: Stopped"
-        notify("AutoFarm stopped", 1.8)
-        resetProgress()
-    end
-
-    StartBtn.MouseButton1Click:Connect(function()
-        startFarming()
-    end)
-
-    StopBtn.MouseButton1Click:Connect(function()
-        stopFarming()
-    end)
-
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        if gp then return end
-        if inp.KeyCode == Enum.KeyCode.RightShift then
-            AutoFarmUI:Destroy()
-            notifierGui:Destroy()
-            getgenv().AutoFarmActive = false
-            resetProgress()
-        end
-    end)
-
-    AutoFarmUI.AncestryChanged:Connect(function(_, parent)
-        if not parent then
-            getgenv().AutoFarmActive = false
-            resetProgress()
-        end
-    end)
-
-    localPlayer.CharacterAdded:Connect(function(char)
-        character = char
-        task.wait(0.2)
-        humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        ensureAntiDeath(character)
     end)
 end)
 
-AddScriptButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join for latest updates", "", "Copy", function() if setclipboard then setclipboard(Settings.DiscordLink) end end)
-AddScriptButton(CreditsTab, "DEVELOPER", "Created by: henriqsz7", "Panel Owner", nil, nil)
-AddScriptButton(CreditsTab, "LEGAL", "Rights reserved to henriqsz7", "Full Control", nil, nil)
-AddScriptButton(CreditsTab, "VERSION", "3.2.6", "", nil, nil)
-
-local AutoExeBtn = AddBasicButton(ConfigTab, "Auto Execute: OFF", function()
-	Settings.AutoExecute = not Settings.AutoExecute
-	AutoExeBtn.Text = "Auto Execute: " .. (Settings.AutoExecute and "ON" or "OFF")
+AddBasicButton(ConfigTab, "Rainbow UI: " .. (Settings.RainbowUI and "ON" or "OFF"), function(btn)
+    Settings.RainbowUI = not Settings.RainbowUI
+    btn.Text = "Rainbow UI: " .. (Settings.RainbowUI and "ON" or "OFF")
 end)
 
-local BindBtn = AddBasicButton(ConfigTab, "Hide Bind: LeftControl", function() end)
-local listening = false
-BindBtn.MouseButton1Click:Connect(function() listening = true BindBtn.Text = "..." end)
+AddBasicButton(ConfigTab, "Performance Mode (No Textures)", function()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
+    end
+end)
 
--- [[ SISTEMA SILENCIOSO ]] --
+local FpsCounter = Instance.new("TextLabel", MainHub)
+FpsCounter.Size = UDim2.new(0, 100, 0, 20)
+FpsCounter.Position = UDim2.new(0, 195, 0, 10)
+FpsCounter.BackgroundTransparency = 1
+FpsCounter.TextColor3 = Color3.fromRGB(200, 200, 200)
+FpsCounter.Font = Enum.Font.GothamBold
+FpsCounter.TextSize = 12
+FpsCounter.TextXAlignment = Enum.TextXAlignment.Left
+FpsCounter.Visible = false
+
+AddBasicButton(ConfigTab, "Show FPS Counter", function()
+    FpsCounter.Visible = not FpsCounter.Visible
+end)
+
+-- Loop FPS & Rainbow
+task.spawn(function()
+    local lastUpdate = tick()
+    local frames = 0
+    while task.wait() do
+        frames = frames + 1
+        if tick() - lastUpdate >= 1 then
+            FpsCounter.Text = "FPS: " .. frames
+            frames = 0
+            lastUpdate = tick()
+        end
+        if Settings.RainbowUI then
+            local hue = tick() % 5 / 5
+            local color = Color3.fromHSV(hue, 0.8, 1)
+            MainStroke.Color = color
+            Logo.TextColor3 = color
+            FOVCircle.Color = color
+        else
+            MainStroke.Color = Settings.AccentColor
+            Logo.TextColor3 = Settings.AccentColor
+            FOVCircle.Color = Settings.AccentColor
+        end
+    end
+end)
+
+-- [[ DISCORD ]] --
+AddScriptButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join official community", "Get News", "Copy Link", function() if setclipboard then setclipboard(Settings.DiscordLink) end end)
+
+-- [[ CREDITS ]] --
+AddScriptButton(CreditsTab, "PROJECT OWNER", "henriqsz7", "All UI/Logic", nil, nil)
+AddScriptButton(CreditsTab, "UI DESIGNER", "henriqsz7", "Modern Dark Theme", nil, nil)
+AddScriptButton(CreditsTab, "VERSION", "3.9.0", "Aimbot & ESP Fix", nil, nil)
+AddScriptButton(CreditsTab, "DEVELOPMENT STATUS", "Stable", "Optimized for performance", nil, nil)
+
+-- [[ SISTEMA DE AUTH ]] --
 local function Decode(t)
     local s = ""
     for _, b in ipairs(t) do s = s .. string.char(b) end
     return s
 end
-
 local _V1 = {55,98,56,48,54,102,57,48,45,54,100,55,101,45,52,101,97,53,45,57,51,57,101,45,98,101,54,57,56,97,97,54,101,54,50,57}
 local _V2 = {104,101,110,114,105,113,115,122,55}
 
@@ -955,40 +609,21 @@ local function OpenHub()
     MainHub.Visible = true
     MainHub.Size = UDim2.new(0, 0, 0, 0)
     SmoothTween(MainHub, 0.5, {Size = UDim2.new(0, 700, 0, 450)})
+    if Settings.AutoExecute then
+        ExecuteScript(_U.WEST)
+    end
 end
 
--- LOGIN AUTOMÁTICO SILENCIOSO POR HWID
-task.spawn(function()
-    if CurrentDeviceID == ADMIN_HWID then
-        KeyFrame.Visible = false
-        task.wait(0.2)
-        OpenHub()
-    end
-end)
+task.spawn(function() if CurrentDeviceID == ADMIN_HWID then OpenHub() end end)
 
 AuthBtn.MouseButton1Click:Connect(function()
-    local input = KeyInput.Text
-    if input == Decode(_V2) or input == Decode(_V1) then
-        OpenHub()
-    else
-        KeyInput.Text = ""
-        KeyInput.PlaceholderText = "WRONG KEY!"
-        for i = 1, 3 do
-            SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -175, 0.5, -140)}) task.wait(0.05)
-            SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -185, 0.5, -140)}) task.wait(0.05)
-        end
-        SmoothTween(KeyFrame, 0.05, {Position = UDim2.new(0.5, -180, 0.5, -140)})
-    end
+    if KeyInput.Text == Decode(_V2) or KeyInput.Text == Decode(_V1) then OpenHub() else KeyInput.Text = "WRONG KEY!" end
 end)
 
 GetKeyBtn.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://work.ink/24Qe/key") end end)
 
 UserInputService.InputBegan:Connect(function(input)
-	if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-		Settings.HideKey = input.KeyCode
-		BindBtn.Text = "Hide Bind: "..tostring(input.KeyCode.Name)
-		listening = false
-	elseif input.KeyCode == Settings.HideKey then
+	if input.KeyCode == Settings.HideKey then
 		Settings.IsVisible = not Settings.IsVisible
 		MainHub.Visible = Settings.IsVisible
 	end
