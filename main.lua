@@ -1,5 +1,5 @@
--- [[ TRXSH HUB V3.9.0 - FINAL PERFORMANCE & FIXES ]] --
--- [[ CREATED BY HENRIQSZ7 ]] --
+--  TRXSH HUB V4.9.0  --
+-- CREATED BY HENRIQSZ7  --
 
 local Player = game:GetService("Players").LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -27,7 +27,47 @@ local _U = {
     IY = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
     WEST = "https://raw.githubusercontent.com/TRXSH-DMN/TRXSH-HUB-WESTBOUND/refs/heads/main/main.lua",
     AIM_UNIVERSAL = "https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Aimbot%20V2%20GUI.lua",
-    SILENT_AIM = "https://raw.githubusercontent.com/XCX443/roblox-script/refs/heads/main/Westbound"
+    SILENT_AIM = "https://raw.githubusercontent.com/XCX443/roblox-script/refs/heads/main/Westbound",
+    
+    -- 99 NIGHT
+    FOX_NAME = "https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/FoxnameHub.lua",
+    VOID_WARE = "https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua",
+    GEC_HUB = "https://raw.githubusercontent.com/GEC0/gec/refs/heads/main/Gec.Loader",
+    NAZURO = "https://nazuro.xyz/99nights",
+    UNAMED = "https://raw.githubusercontent.com/rblxscriptsdotnet/roblox-scripts/refs/heads/main/Auto%20Loot%20Chests%20and%20Bring%20Items",
+    
+    -- BLOX FRUITS
+    HOHO_HUB = "https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI",
+    NIGHT_HUB = "https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/Trial.luau",
+    
+    -- THE FORGE
+    STELLAR = "https://raw.githubusercontent.com/DuxiiT/Stellar-Hub/refs/heads/main/The-Forge",
+    HT_HUB = "https://raw.githubusercontent.com/HTscripthub/TheForge/refs/heads/main/TheForge.lua",
+    PEPEHOOK = "https://raw.githubusercontent.com/GiftStein1/pepehook-loader/refs/heads/main/loader.lua",
+    NOUSIGI = "https://nousigi.com/loader.lua",
+    POLLUTED = "https://api.luarmor.net/files/v3/loaders/ecfcccea43f60fa4c46009f854c06a52.lua",
+    ZENITH = "https://zenithhub.cloud/panel/script",
+    RIFT = "https://rifton.top/loader.lua",
+    LUNOR = "https://lunor.dev/loader",
+    AIRFLOW = "https://airflowscript.com/loader",
+    CHIYO = "https://raw.githubusercontent.com/kaisenlmao/loader/refs/heads/main/chiyo.lua",
+    HAZE = "https://haze.wtf/api/script",
+    NS_HUB = "https://raw.githubusercontent.com/OhhMyGehlee/sh/refs/heads/main/a",
+    SOLIX = "https://raw.githubusercontent.com/meobeo8/a/a/a",
+    SHAIZY = "https://api.luarmor.net/files/v3/loaders/d29f750a5d2c74070b792230ccde0f69.lua",
+    
+    -- RO GHOUL
+    PORRY_HUB = "https://raw.githubusercontent.com/PorryDepTrai/exploit/main/DashBoostSolora.lua",
+    
+    -- STEAL A BRAINROT INDIVIDUAL URLS
+    SILENT_HUB_BRAIN = "https://pastefy.app/2DsuRU5s/raw",
+    TORA_HUB_BRAIN = "https://raw.githubusercontent.com/gumanba/Scripts/main/PlantsVsBrainrots",
+    NAT_HUB_BRAIN = "https://raw.githubusercontent.com/dy1zn4t/NatHub/refs/heads/main/loader",
+    SPEED_HUBX_BRAIN = "https://raw.githubusercontent.com/AhmadV99/Speed-Hub-X/main/Speed%20Hub%20X.lua",
+    ZYRON_HUB_BRAIN = "https://raw.githubusercontent.com/ZyronHub0/ZyronHub/refs/heads/main/hub.lua",
+    LUMIN_HUB_BRAIN = "http://luminon.top/loader.lua",
+    BLUE_X_HUB_BRAIN = "https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua",
+    TOASTY_HUB_BRAIN = "https://raw.githubusercontent.com/nouralddin-abdullah/ToastyHub-XD/refs/heads/main/hub-main.lua"
 }
 
 local TargetParent = (gethui and gethui()) or (CoreGui:FindFirstChild("RobloxGui") and CoreGui.RobloxGui) or PlayerGui
@@ -128,12 +168,10 @@ local function IsValidTarget(targetPlr)
     if not targetPlr or not targetPlr.Character or not targetPlr.Character:FindFirstChild("Humanoid") or targetPlr.Character.Humanoid.Health <= 0 then
         return false
     end
-    
     local passive = false
     if targetPlr.Character:FindFirstChild("Passive") then passive = true end
     if targetPlr:FindFirstChild("States") and targetPlr.States:FindFirstChild("Passive") and targetPlr.States.Passive.Value == true then passive = true end
     if passive then return false end
-
     return true
 end
 
@@ -143,7 +181,7 @@ local function CheckFriendStatus(targetPlr)
     return isFriend
 end
 
--- [[ UPDATED ESP LOGIC WITH DISTANCE ]] --
+-- [[ ESP LOGIC ]] --
 local function UpdateEsp()
     for _, plr in pairs(game.Players:GetPlayers()) do
         if plr ~= Player then
@@ -151,8 +189,6 @@ local function UpdateEsp()
             if char and IsValidTarget(plr) then
                 local isFriend = CheckFriendStatus(plr)
                 local root = char:FindFirstChild("HumanoidRootPart")
-
-                -- ESP NAME & DISTANCE --
                 if getgenv().EspNameEnabled then
                     local head = char:FindFirstChild("Head")
                     if head then
@@ -174,7 +210,6 @@ local function UpdateEsp()
                             label.TextSize = 12
                             label.Parent = billboard
                         end
-                        
                         local distText = ""
                         if getgenv().EspDistanceEnabled and root and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
                             local d = (root.Position - Player.Character.HumanoidRootPart.Position).Magnitude
@@ -185,8 +220,6 @@ local function UpdateEsp()
                 else
                     if char:FindFirstChild("TrxshName") then char.TrxshName:Destroy() end
                 end
-
-                -- ESP BODY --
                 if getgenv().EspCorpoEnabled and not isFriend then
                     if not char:FindFirstChild("TrxshEspCorpo") then
                         local highlight = Instance.new("Highlight")
@@ -209,20 +242,15 @@ local function UpdateEsp()
     end
 end
 
-task.spawn(function()
-    while task.wait(0.1) do
-        UpdateEsp()
-    end
-end)
+task.spawn(function() while task.wait(0.1) do UpdateEsp() end end)
 
--- [[ FINALIZED GUN MODS LOGIC ]] --
+-- [[ GUN MODS LOGIC ]] --
 RunService.Heartbeat:Connect(function()
     pcall(function()
         if not Player.Character then return end
         local tools = Player.Backpack:GetChildren()
         local held = Player.Character:FindFirstChildOfClass("Tool")
         if held then table.insert(tools, held) end
-        
         for _, tool in pairs(tools) do
             if tool:IsA("Tool") then
                 local stats = tool:FindFirstChild("Stats") or tool:FindFirstChild("Configuration")
@@ -252,17 +280,14 @@ local function GetClosestPlayer()
     local closest = nil
     local shortestDistance = getgenv().AimbotFOV
     local mouseLocation = UserInputService:GetMouseLocation()
-
     for _, v in pairs(game.Players:GetPlayers()) do
         if v ~= Player and IsValidTarget(v) and v.Character:FindFirstChild("HumanoidRootPart") then
-            if v.Character:FindFirstChild("TrxshEspCorpo") or (getgenv().EspNameEnabled and v.Character:FindFirstChild("Head")) then
-                local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
-                if onScreen then
-                    local distance = (Vector2.new(pos.X, pos.Y) - mouseLocation).Magnitude
-                    if distance < shortestDistance then
-                        closest = v
-                        shortestDistance = distance
-                    end
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+            if onScreen then
+                local distance = (Vector2.new(pos.X, pos.Y) - mouseLocation).Magnitude
+                if distance < shortestDistance then
+                    closest = v
+                    shortestDistance = distance
                 end
             end
         end
@@ -454,7 +479,7 @@ ContentArea.BackgroundTransparency = 1
 
 MakeDraggable(MainHub)
 
--- [[ COMPONENTS ]] --
+-- [[ UI COMPONENTS ]] --
 local function CreateTab(name, layoutOrder)
 	local TabBtn = Instance.new("TextButton")
 	TabBtn.Parent = TabList
@@ -469,7 +494,6 @@ local function CreateTab(name, layoutOrder)
 	local TS = Instance.new("UIStroke", TabBtn)
 	TS.Color = Color3.fromRGB(60, 60, 60)
 	TS.Transparency = 0.7
-
 	local Page = Instance.new("ScrollingFrame")
 	Page.Parent = ContentArea
 	Page.Size = UDim2.new(1, 0, 1, 0)
@@ -481,9 +505,7 @@ local function CreateTab(name, layoutOrder)
 	local PL = Instance.new("UIListLayout", Page)
 	PL.Padding = UDim.new(0, 10)
 	PL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
 	ApplyHover(TabBtn, Color3.fromRGB(20, 20, 24), Color3.fromRGB(30, 30, 35), TS)
-
 	TabBtn.MouseButton1Click:Connect(function()
 		for _, p in pairs(ContentArea:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
 		for _, b in pairs(TabList:GetChildren()) do if b:IsA("TextButton") then SmoothTween(b, 0.3, {BackgroundColor3 = Color3.fromRGB(20, 20, 24), TextColor3 = Color3.fromRGB(150, 150, 150)}) end end
@@ -503,7 +525,6 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	local CS = Instance.new("UIStroke", Container)
 	CS.Color = Color3.fromRGB(60, 60, 60)
 	CS.Transparency = 0.7
-
 	local Title = Instance.new("TextLabel")
 	Title.Parent = Container
 	Title.Size = UDim2.new(1, 0, 0, 25)
@@ -514,7 +535,6 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 	Title.TextSize = 14
 	Title.TextXAlignment = Enum.TextXAlignment.Left
-
 	local Desc1 = Instance.new("TextLabel")
 	Desc1.Parent = Container
 	Desc1.Size = UDim2.new(1, -100, 0, 15)
@@ -525,7 +545,6 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	Desc1.TextColor3 = Color3.fromRGB(150, 150, 150)
 	Desc1.TextSize = 11
 	Desc1.TextXAlignment = Enum.TextXAlignment.Left
-
 	local Desc2 = Instance.new("TextLabel")
 	Desc2.Parent = Container
 	Desc2.Size = UDim2.new(1, -100, 0, 15)
@@ -533,7 +552,13 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	Desc2.BackgroundTransparency = 1
 	Desc2.Font = Enum.Font.GothamMedium
 	Desc2.Text = line2
-    Desc2.TextColor3 = Color3.fromRGB(200, 60, 60)
+    
+    -- REGRA: SE O NOME FOR "needs key", EXIBIR EM VERMELHO --
+    if line2 == "needs key" then
+        Desc2.TextColor3 = Color3.fromRGB(255, 0, 0)
+    else
+        Desc2.TextColor3 = Color3.fromRGB(200, 60, 60)
+    end
 	Desc2.TextXAlignment = Enum.TextXAlignment.Left
 
     if specialLine and specialLine ~= "" then
@@ -549,7 +574,6 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
         Desc3.TextXAlignment = Enum.TextXAlignment.Left
         Desc3.TextWrapped = true
     end
-
 	if btnText and btnText ~= "" then
 		local ExecBtn = Instance.new("TextButton")
 		ExecBtn.Parent = Container
@@ -564,122 +588,109 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
         local ES = Instance.new("UIStroke", ExecBtn)
         ES.Color = Color3.fromRGB(255,255,255)
         ES.Transparency = 0.8
-		ExecBtn.MouseButton1Click:Connect(function()
-            callback(ExecBtn)
-        end)
+		ExecBtn.MouseButton1Click:Connect(function() callback(ExecBtn) end)
         ApplyHover(ExecBtn, Settings.AccentColor, Color3.fromRGB(110, 70, 220), ES)
         return ExecBtn
 	end
 end
 
--- [[ TABS ]] --
+-- [[ TABS INITIALIZATION ]] --
 local ProjectSlayers = CreateTab("PROJECT SLAYERS", 1)
 local WestBound = CreateTab("WESTBOUND", 2)
+local Night99 = CreateTab("99 NIGHT", 3)
+local BloxFruits = CreateTab("BLOX FRUITS", 4)
+local TheForge = CreateTab("THE FORGE", 5)
+local RoGhoul = CreateTab("RO GHOUL", 6)
+local StealBrain = CreateTab("STEAL A BRAINROT", 7)
 local Universal = CreateTab("UNIVERSAL", 98)
 local ConfigTab = CreateTab("SETTINGS", 99)
 local DiscordTab = CreateTab("DISCORD", 100)
 local CreditsTab = CreateTab("CREDITS", 101)
 
--- [[ FIX SCROLLING SIZES ]] --
-ProjectSlayers.CanvasSize = UDim2.new(0,0,0,500)
-WestBound.CanvasSize = UDim2.new(0,0,0,1000)
-Universal.CanvasSize = UDim2.new(0,0,0,500)
-ConfigTab.CanvasSize = UDim2.new(0,0,0,1000)
+-- [[ CANVAS SIZES ]] --
+ProjectSlayers.CanvasSize = UDim2.new(0, 0, 0, 500)
+WestBound.CanvasSize = UDim2.new(0, 0, 0, 1000)
+Night99.CanvasSize = UDim2.new(0, 0, 0, 800)
+BloxFruits.CanvasSize = UDim2.new(0, 0, 0, 500)
+TheForge.CanvasSize = UDim2.new(0, 0, 0, 2200)
+RoGhoul.CanvasSize = UDim2.new(0, 0, 0, 400)
+StealBrain.CanvasSize = UDim2.new(0, 0, 0, 1500)
+Universal.CanvasSize = UDim2.new(0, 0, 0, 500)
+ConfigTab.CanvasSize = UDim2.new(0, 0, 0, 1000)
 
--- [[ SLAYERS PAGE ]] --
-AddButton(ProjectSlayers, "FROSTIES HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.FROST) end)
-AddButton(ProjectSlayers, "CLOUD HUB", "Auto farm everything", "Needs Key", "Execute", function() ExecuteScript(_U.CLOUD) end)
+-- [[ PROJECT SLAYERS ]] --
+AddButton(ProjectSlayers, "FROSTIES HUB", "Auto farm everything", "needs key", "Execute", function() ExecuteScript(_U.FROST) end)
+AddButton(ProjectSlayers, "CLOUD HUB", "Auto farm everything", "needs key", "Execute", function() ExecuteScript(_U.CLOUD) end)
 AddButton(ProjectSlayers, "FIRE HUB", "Auto farm everything", "PATCHED", "Execute", function() ExecuteScript(_U.FIRE) end)
 
 -- [[ WESTBOUND PAGE ]] --
 AddButton(WestBound, "TRXSH HUB", "Auto farm money", "Latest Version", "Execute", function() ExecuteScript(_U.WEST) end, "YOU NEED TO EXECUTE BEFORE SPAWNING. IF YOU ARE ALREADY SPAWNED REJOIN THE GAME AND EXECUTE THE SCRIPT IN THE LOADING SCREEN OR IN THE TEAM SELECTION SCREEN")
-AddButton(WestBound, "AIMBOT (FIXED)", "Lock-on Body", "BY HENRIQSZ7", (getgenv().AimbotEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().AimbotEnabled = not getgenv().AimbotEnabled
-    btn.Text = getgenv().AimbotEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "AIMBOT KEYBIND", "Change Aimbot Key", "CURRENT: " .. getgenv().AimbotKey.Name, "Change", function(btn) 
-    btn.Text = "..."
-    local conn
-    conn = UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            getgenv().AimbotKey = input.KeyCode
-            btn.Text = "SET!"
-            task.wait(1)
-            btn.Text = "Change"
-            conn:Disconnect()
-        end
-    end)
-end)
-AddButton(WestBound, "FRIEND CHECK", "Ignore only Roblox friends", "BY HENRIQSZ7", (getgenv().FriendCheckEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().FriendCheckEnabled = not getgenv().FriendCheckEnabled
-    btn.Text = getgenv().FriendCheckEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "FAST FIRE", "No cooldown shooting", "BY HENRIQSZ7", (getgenv().FastFireEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().FastFireEnabled = not getgenv().FastFireEnabled
-    btn.Text = getgenv().FastFireEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "FAST EQUIP", "Instant draw weapons", "BY HENRIQSZ7", (getgenv().FastEquipEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().FastEquipEnabled = not getgenv().FastEquipEnabled
-    btn.Text = getgenv().FastEquipEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "NO RECOIL", "Removes gun shake and spread", "BY HENRIQSZ7", (getgenv().NoRecoilEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().NoRecoilEnabled = not getgenv().NoRecoilEnabled
-    btn.Text = getgenv().NoRecoilEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "ESP NAME INFO", "See names through walls", "BY HENRIQSZ7", (getgenv().EspNameEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().EspNameEnabled = not getgenv().EspNameEnabled
-    btn.Text = getgenv().EspNameEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "ESP DISTANCE", "Show meters to target", "BY HENRIQSZ7", (getgenv().EspDistanceEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().EspDistanceEnabled = not getgenv().EspDistanceEnabled
-    btn.Text = getgenv().EspDistanceEnabled and "ON" or "OFF"
-end)
-AddButton(WestBound, "ESP BODY", "Highlight player bodies", "BY HENRIQSZ7", (getgenv().EspCorpoEnabled and "ON" or "OFF"), function(btn) 
-    getgenv().EspCorpoEnabled = not getgenv().EspCorpoEnabled
-    btn.Text = getgenv().EspCorpoEnabled and "ON" or "OFF"
-end)
+AddButton(WestBound, "AIMBOT (FIXED)", "Lock-on Body", "BY HENRIQSZ7", (getgenv().AimbotEnabled and "ON" or "OFF"), function(btn) getgenv().AimbotEnabled = not getgenv().AimbotEnabled btn.Text = getgenv().AimbotEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "AIMBOT KEYBIND", "Change Aimbot Key", "CURRENT: " .. getgenv().AimbotKey.Name, "Change", function(btn) btn.Text = "..." local conn conn = UserInputService.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.Keyboard then getgenv().AimbotKey = input.KeyCode btn.Text = "SET!" task.wait(1) btn.Text = "Change" conn:Disconnect() end end) end)
+AddButton(WestBound, "FRIEND CHECK", "Ignore only Roblox friends", "BY HENRIQSZ7", (getgenv().FriendCheckEnabled and "ON" or "OFF"), function(btn) getgenv().FriendCheckEnabled = not getgenv().FriendCheckEnabled btn.Text = getgenv().FriendCheckEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "FAST FIRE", "No cooldown shooting", "BY HENRIQSZ7", (getgenv().FastFireEnabled and "ON" or "OFF"), function(btn) getgenv().FastFireEnabled = not getgenv().FastFireEnabled btn.Text = getgenv().FastFireEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "FAST EQUIP", "Instant draw weapons", "BY HENRIQSZ7", (getgenv().FastEquipEnabled and "ON" or "OFF"), function(btn) getgenv().FastEquipEnabled = not getgenv().FastEquipEnabled btn.Text = getgenv().FastEquipEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "NO RECOIL", "Removes gun shake and spread", "BY HENRIQSZ7", (getgenv().NoRecoilEnabled and "ON" or "OFF"), function(btn) getgenv().NoRecoilEnabled = not getgenv().NoRecoilEnabled btn.Text = getgenv().NoRecoilEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "ESP NAME INFO", "See names through walls", "BY HENRIQSZ7", (getgenv().EspNameEnabled and "ON" or "OFF"), function(btn) getgenv().EspNameEnabled = not getgenv().EspNameEnabled btn.Text = getgenv().EspNameEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "ESP DISTANCE", "Show meters to target", "BY HENRIQSZ7", (getgenv().EspDistanceEnabled and "ON" or "OFF"), function(btn) getgenv().EspDistanceEnabled = not getgenv().EspDistanceEnabled btn.Text = getgenv().EspDistanceEnabled and "ON" or "OFF" end)
+AddButton(WestBound, "ESP BODY", "Highlight player bodies", "BY HENRIQSZ7", (getgenv().EspCorpoEnabled and "ON" or "OFF"), function(btn) getgenv().EspCorpoEnabled = not getgenv().EspCorpoEnabled btn.Text = getgenv().EspCorpoEnabled and "ON" or "OFF" end)
 
--- [[ UNIVERSAL PAGE ]] --
+-- [[ 99 NIGHT ]] --
+AddButton(Night99, "FOX NAME HUB", "BY CAOMOD2077", "needs key", "Execute", function() ExecuteScript(_U.FOX_NAME) end)
+AddButton(Night99, "VOID WARE", "Probably the best", "needs key", "Execute", function() ExecuteScript(_U.VOID_WARE) end)
+AddButton(Night99, "GEC HUB", "BY GEC0", "needs key", "Execute", function() ExecuteScript(_U.GEC_HUB) end)
+AddButton(Night99, "NAZURO HUB", "BY NAZURO", "needs key", "Execute", function() ExecuteScript(_U.NAZURO) end)
+AddButton(Night99, "UNAMED", "Auto Loot & Bring Items", "needs key", "Execute", function() ExecuteScript(_U.UNAMED) end)
+
+-- [[ BLOX FRUITS ]] --
+AddButton(BloxFruits, "HOHO HUB", "Latest UI", "needs key", "Execute", function() ExecuteScript(_U.HOHO_HUB) end)
+AddButton(BloxFruits, "NIGHT HUB", "BY WhiteX", "needs key", "Execute", function() ExecuteScript(_U.NIGHT_HUB) end)
+
+-- [[ THE FORGE ]] --
+AddButton(TheForge, "STELLAR HUB", "BY DuxiiT", "needs key", "Execute", function() ExecuteScript(_U.STELLAR) end)
+AddButton(TheForge, "HT HUB", "BY HTscripthub", "needs key", "Execute", function() ExecuteScript(_U.HT_HUB) end)
+AddButton(TheForge, "PEPEHOOK", "BY GiftStein1", "needs key", "Execute", function() ExecuteScript(_U.PEPEHOOK) end)
+AddButton(TheForge, "NOUSIGI HUB", "Official Hub", "needs key", "Execute", function() ExecuteScript(_U.NOUSIGI) end)
+AddButton(TheForge, "POLLUTED HUB", "Luarmor Loader", "needs key", "Execute", function() ExecuteScript(_U.POLLUTED) end)
+AddButton(TheForge, "ZENITH HUB", "Official Cloud", "needs key", "Execute", function() ExecuteScript(_U.ZENITH) end)
+AddButton(TheForge, "RIFT HUB", "Official Website", "needs key", "Execute", function() ExecuteScript(_U.RIFT) end)
+AddButton(TheForge, "LUNOR HUB", "Official Dev", "needs key", "Execute", function() ExecuteScript(_U.LUNOR) end)
+AddButton(TheForge, "AIRFLOW HUB", "Official Site", "needs key", "Execute", function() ExecuteScript(_U.AIRFLOW) end)
+AddButton(TheForge, "CHIYO HUB", "BY kaisenlmao", "needs key", "Execute", function() ExecuteScript(_U.CHIYO) end)
+AddButton(TheForge, "HAZE HUB", "Official API", "needs key", "Execute", function() ExecuteScript(_U.HAZE) end)
+AddButton(TheForge, "NS HUB", "BY OhhMyGehlee", "needs key", "Execute", function() ExecuteScript(_U.NS_HUB) end)
+AddButton(TheForge, "SOLIX HUB", "BY meobeo8", "needs key", "Execute", function() ExecuteScript(_U.SOLIX) end)
+AddButton(TheForge, "SHAIZY HUB", "Luarmor Loader", "needs key", "Execute", function() ExecuteScript(_U.SHAIZY) end)
+
+-- [[ RO GHOUL ]] --
+AddButton(RoGhoul, "PORRY'S HUB", "BY PorryDepTrai", "needs key", "Execute", function() ExecuteScript(_U.PORRY_HUB) end)
+
+-- [[ STEAL A BRAINROT INDIVIDUAL BUTTONS ]] --
+AddButton(StealBrain, "SILENT HUB", "Official Website", "needs key", "Execute", function() ExecuteScript(_U.SILENT_HUB_BRAIN) end)
+AddButton(StealBrain, "TORA HUB", "BY gumanba", "needs key", "Execute", function() ExecuteScript(_U.TORA_HUB_BRAIN) end)
+AddButton(StealBrain, "CHIYO HUB", "BY kaisenlmao", "needs key", "Execute", function() ExecuteScript(_U.CHIYO) end)
+AddButton(StealBrain, "NAT HUB", "BY dy1zn4t", "needs key", "Execute", function() ExecuteScript(_U.NAT_HUB_BRAIN) end)
+AddButton(StealBrain, "SPEED HUBX", "BY AhmadV99", "needs key", "Execute", function() ExecuteScript(_U.SPEED_HUBX_BRAIN) end)
+AddButton(StealBrain, "ZYRON HUB", "BY ZyronHub0", "needs key", "Execute", function() ExecuteScript(_U.ZYRON_HUB_BRAIN) end)
+AddButton(StealBrain, "LUMIN HUB", "Official Loader", "needs key", "Execute", function() ExecuteScript(_U.LUMIN_HUB_BRAIN) end)
+AddButton(StealBrain, "BLUE X HUB", "BY Dev-BlueX", "needs key", "Execute", function() ExecuteScript(_U.BLUE_X_HUB_BRAIN) end)
+AddButton(StealBrain, "TOASTY HUB", "BY nouralddin-abdullah", "needs key", "Execute", function() ExecuteScript(_U.TOASTY_HUB_BRAIN) end)
+
+-- [[ UNIVERSAL ]] --
 AddButton(Universal, "SILENT AIM", "Universal Script", "Silent Aim working in almost all games", "Execute", function() ExecuteScript(_U.SILENT_AIM) end)
 AddButton(Universal, "AIMBOT + ESP", "Works in almost all games", "Universal", "Execute", function() ExecuteScript(_U.AIM_UNIVERSAL) end)
 AddButton(Universal, "INFINITE YIELD", "Universal script commands", "Admin", "Execute", function() ExecuteScript(_U.IY) end)
 
--- [[ SETTINGS PAGE ]] --
+-- [[ SETTINGS ]] --
 AddButton(ConfigTab, "FULL BRIGHT", "Make map brighter", "Visuals", "Enable", function() Lighting.Brightness = 2 Lighting.ClockTime = 14 Lighting.GlobalShadows = false end)
 AddButton(ConfigTab, "UNLOCK FPS", "Unlock 60 FPS limit", "Performance", "Execute", function() if setfpscap then setfpscap(999) end end)
-AddButton(ConfigTab, "AUTO EXECUTE", "Execute main script on start", "System", (Settings.AutoExecute and "ON" or "OFF"), function(btn) 
-    Settings.AutoExecute = not Settings.AutoExecute
-    btn.Text = Settings.AutoExecute and "ON" or "OFF"
-end)
-AddButton(ConfigTab, "RAINBOW UI", "Change UI colors constantly", "Visuals", (Settings.RainbowUI and "ON" or "OFF"), function(btn) 
-    Settings.RainbowUI = not Settings.RainbowUI
-    btn.Text = Settings.RainbowUI and "ON" or "OFF"
-end)
-AddButton(ConfigTab, "SHOW FPS", "Toggle FPS counter", "HUD", (Settings.ShowFps and "ON" or "OFF"), function(btn) 
-    Settings.ShowFps = not Settings.ShowFps
-    btn.Text = Settings.ShowFps and "ON" or "OFF"
-end)
-AddButton(ConfigTab, "HIDE KEYBIND", "Key to hide/show panel", "CURRENT: " .. Settings.HideKey.Name, "Bind", function(btn) 
-    btn.Text = "..."
-    local conn
-    conn = UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Keyboard then
-            Settings.HideKey = input.KeyCode
-            btn.Text = "SET!"
-            task.wait(1)
-            btn.Text = "Bind"
-            conn:Disconnect()
-        end
-    end)
-end)
+AddButton(ConfigTab, "AUTO EXECUTE", "Execute main script on start", "System", (Settings.AutoExecute and "ON" or "OFF"), function(btn) Settings.AutoExecute = not Settings.AutoExecute btn.Text = Settings.AutoExecute and "ON" or "OFF" end)
+AddButton(ConfigTab, "RAINBOW UI", "Change UI colors constantly", "Visuals", (Settings.RainbowUI and "ON" or "OFF"), function(btn) Settings.RainbowUI = not Settings.RainbowUI btn.Text = Settings.RainbowUI and "ON" or "OFF" end)
+AddButton(ConfigTab, "SHOW FPS", "Toggle FPS counter", "HUD", (Settings.ShowFps and "ON" or "OFF"), function(btn) Settings.ShowFps = not Settings.ShowFps btn.Text = Settings.ShowFps and "ON" or "OFF" end)
+AddButton(ConfigTab, "HIDE KEYBIND", "Key to hide/show panel", "CURRENT: " .. Settings.HideKey.Name, "Bind", function(btn) btn.Text = "..." local conn conn = UserInputService.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.Keyboard then Settings.HideKey = input.KeyCode btn.Text = "SET!" task.wait(1) btn.Text = "Bind" conn:Disconnect() end end) end)
 AddButton(ConfigTab, "REJOIN SERVER", "Reconnect to current game", "Utility", "Execute", function() game:GetService("TeleportService"):Teleport(game.PlaceId, Player) end)
-AddButton(ConfigTab, "ANTI-AFK", "Prevents kick for idling", "System", "Execute", function() 
-    local VirtualUser = game:GetService("VirtualUser")
-    Player.Idled:Connect(function() VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new()) end)
-end)
-AddButton(ConfigTab, "PERFORMANCE MODE", "Remove textures to boost FPS", "Performance", "Execute", function() 
-    for _, v in pairs(game:GetDescendants()) do if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end end
-end)
+AddButton(ConfigTab, "ANTI-AFK", "Prevents kick for idling", "System", "Execute", function() local VirtualUser = game:GetService("VirtualUser") Player.Idled:Connect(function() VirtualUser:CaptureController() VirtualUser:ClickButton2(Vector2.new()) end) end)
+AddButton(ConfigTab, "PERFORMANCE MODE", "Remove textures to boost FPS", "Performance", "Execute", function() for _, v in pairs(game:GetDescendants()) do if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end end end)
 
 -- [[ HUD ELEMENTS ]] --
 local FpsCounter = Instance.new("TextLabel", MainHub)
@@ -721,10 +732,10 @@ end)
 -- [[ DISCORD ]] --
 AddButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join official Discord", "Get News", "Copy Link", function() if setclipboard then setclipboard(Settings.DiscordLink) end end)
 
--- [[ CREDITS PAGE ]] --
+-- [[ CREDITS ]] --
 AddButton(CreditsTab, "PROJECT OWNER", "henriqsz7", "All UI/Logic", "", function() end)
 AddButton(CreditsTab, "UI DESIGNER", "henriqsz7", "Modern Dark Theme", "", function() end)
-AddButton(CreditsTab, "VERSION", "3.9.0", "Stable Build", "", function() end)
+AddButton(CreditsTab, "VERSION", "4.0.0", "Stable Build", "", function() end)
 AddButton(CreditsTab, "DEVELOPMENT STATUS", "Stable", "Optimized for performance", "", function() end)
 
 -- [[ AUTH SYSTEM ]] --
@@ -752,11 +763,7 @@ KeyInput:GetPropertyChangedSignal("Text"):Connect(function()
     end
 end)
 
-task.spawn(function() 
-    if CurrentDeviceID ~= "" and CurrentDeviceID == ADMIN_HWID then 
-        OpenHub() 
-    end 
-end)
+task.spawn(function() if CurrentDeviceID ~= "" and CurrentDeviceID == ADMIN_HWID then OpenHub() end end)
 
 AuthBtn.MouseButton1Click:Connect(function()
     if KeyInput.Text == Decode(_V2) or KeyInput.Text == Decode(_V1) or KeyInput.Text == KEY_DIA then 
@@ -766,11 +773,7 @@ AuthBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-GetKeyBtn.MouseButton1Click:Connect(function() 
-    if setclipboard then 
-        setclipboard("https://work.ink/24Qe/key-1") 
-    end 
-end)
+GetKeyBtn.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://work.ink/24Qe/key-1") end end)
 
 UserInputService.InputBegan:Connect(function(input)
 	if input.KeyCode == Settings.HideKey then
