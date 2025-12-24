@@ -26,7 +26,8 @@ local _U = {
     FROST = "https://raw.githubusercontent.com/cattercatty/Scripts/main/Loader.lua",
     IY = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
     WEST = "https://raw.githubusercontent.com/TRXSH-DMN/TRXSH-HUB-WESTBOUND/refs/heads/main/main.lua",
-    AIM_UNIVERSAL = "https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Aimbot%20V2%20GUI.lua"
+    AIM_UNIVERSAL = "https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Aimbot%20V2%20GUI.lua",
+    SILENT_AIM = "https://raw.githubusercontent.com/XCX443/roblox-script/refs/heads/main/Westbound"
 }
 
 local TargetParent = (gethui and gethui()) or (CoreGui:FindFirstChild("RobloxGui") and CoreGui.RobloxGui) or PlayerGui
@@ -60,6 +61,10 @@ getgenv().AimbotEnabled = false
 getgenv().AimbotKey = Enum.KeyCode.E
 getgenv().AimbotFOV = 150
 getgenv().AimbotSmoothing = 0.15
+getgenv().NoRecoilEnabled = false
+getgenv().FastFireEnabled = false
+getgenv().FastReloadEnabled = false
+getgenv().FriendCheckEnabled = true
 
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 1
@@ -117,16 +122,36 @@ local function MakeDraggable(frame)
 	UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
--- [[ ESP LOGIC ]] --
+-- [[ TARGET VALIDATION ]] --
+local function IsValidTarget(targetPlr)
+    if not targetPlr or not targetPlr.Character or not targetPlr.Character:FindFirstChild("Humanoid") or targetPlr.Character.Humanoid.Health <= 0 then
+        return false
+    end
+    
+    if getgenv().FriendCheckEnabled then
+        local isFriend = false
+        pcall(function() isFriend = Player:IsFriendsWith(targetPlr.UserId) end)
+        if isFriend then return false end
+    end
+
+    local passive = false
+    if targetPlr.Character:FindFirstChild("Passive") then passive = true end
+    if targetPlr:FindFirstChild("States") and targetPlr.States:FindFirstChild("Passive") and targetPlr.States.Passive.Value == true then passive = true end
+    if passive then return false end
+
+    return true
+end
+
+-- [[ FIXED ESP LOGIC - NO FLICKERING ]] --
 local function UpdateEsp()
     for _, plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= Player and plr.Character then
+        if plr ~= Player then
             local char = plr.Character
-            local existingName = char:FindFirstChild("TrxshName")
-            if getgenv().EspNameEnabled then
-                if not existingName then
+            if char and IsValidTarget(plr) then
+                -- ESP NAME --
+                if getgenv().EspNameEnabled then
                     local head = char:FindFirstChild("Head")
-                    if head then
+                    if head and not char:FindFirstChild("TrxshName") then
                         local billboard = Instance.new("BillboardGui")
                         billboard.Name = "TrxshName"
                         billboard.AlwaysOnTop = true
@@ -143,41 +168,81 @@ local function UpdateEsp()
                         label.TextSize = 12
                         label.Parent = billboard
                     end
+                else
+                    if char:FindFirstChild("TrxshName") then char.TrxshName:Destroy() end
+                end
+
+                -- ESP BODY --
+                if getgenv().EspCorpoEnabled then
+                    if not char:FindFirstChild("TrxshEspCorpo") then
+                        local highlight = Instance.new("Highlight")
+                        highlight.Name = "TrxshEspCorpo"
+                        highlight.FillColor = Settings.AccentColor
+                        highlight.FillTransparency = 0.5
+                        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        highlight.Parent = char
+                    end
+                else
+                    if char:FindFirstChild("TrxshEspCorpo") then char.TrxshEspCorpo:Destroy() end
                 end
             else
-                if existingName then existingName:Destroy() end
-            end
-            local existingBody = char:FindFirstChild("TrxshEspCorpo")
-            if getgenv().EspCorpoEnabled then
-                if not existingBody then
-                    local highlight = Instance.new("Highlight")
-                    highlight.Name = "TrxshEspCorpo"
-                    highlight.FillColor = Settings.AccentColor
-                    highlight.FillTransparency = 0.5
-                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    highlight.Parent = char
+                -- CLEANUP IF INVALID OR FRIEND --
+                if char then
+                    if char:FindFirstChild("TrxshName") then char.TrxshName:Destroy() end
+                    if char:FindFirstChild("TrxshEspCorpo") then char.TrxshEspCorpo:Destroy() end
                 end
-            else
-                if existingBody then existingBody:Destroy() end
             end
         end
     end
 end
 
 task.spawn(function()
-    while task.wait(0.5) do
+    while task.wait(0.1) do
         UpdateEsp()
     end
 end)
 
--- [[ AIMBOT LOGIC WESTBOUND ]] --
+-- [[ REINFORCED GUN MODS - FAST RELOAD FIX ]] --
+RunService.Stepped:Connect(function()
+    pcall(function()
+        local tool = Player.Character and Player.Character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Stats") then
+            local s = tool.Stats
+            
+            if getgenv().NoRecoilEnabled then
+                if s:FindFirstChild("Recoil") then s.Recoil.Value = 0 end
+                if s:FindFirstChild("Spread") then s.Spread.Value = 0 end
+                if s:FindFirstChild("MaxSpread") then s.MaxSpread.Value = 0 end
+            end
+            
+            if getgenv().FastFireEnabled then
+                if s:FindFirstChild("FireRate") then s.FireRate.Value = 0 end
+                if s:FindFirstChild("Cooldown") then s.Cooldown.Value = 0 end
+                if tool:FindFirstChild("Configuration") and tool.Configuration:FindFirstChild("Automatic") then
+                    tool.Configuration.Automatic.Value = true
+                end
+            end
+            
+            if getgenv().FastReloadEnabled then
+                -- Westbound specific reload values --
+                if s:FindFirstChild("ReloadTime") then s.ReloadTime.Value = 0 end
+                if s:FindFirstChild("ReloadSpeed") then s.ReloadSpeed.Value = 100 end
+                if s:FindFirstChild("Reload") then s.Reload.Value = 0 end
+                -- Multi-bullet reload fix --
+                if s:FindFirstChild("BulletReload") then s.BulletReload.Value = false end
+            end
+        end
+    end)
+end)
+
+-- [[ AIMBOT LOGIC ]] --
 local function GetClosestPlayer()
     local closest = nil
     local shortestDistance = getgenv().AimbotFOV
     local mouseLocation = UserInputService:GetMouseLocation()
 
     for _, v in pairs(game.Players:GetPlayers()) do
-        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+        if v ~= Player and IsValidTarget(v) and v.Character:FindFirstChild("HumanoidRootPart") then
             local pos, onScreen = Camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
             if onScreen then
                 local distance = (Vector2.new(pos.X, pos.Y) - mouseLocation).Magnitude
@@ -319,10 +384,48 @@ Logo.Text = "TRXSH HUB"
 Logo.TextColor3 = Settings.AccentColor
 Logo.TextSize = 18
 
+-- [[ USER INFO SECTION ]] --
+local UserInfoFrame = Instance.new("Frame")
+UserInfoFrame.Parent = SideMenu
+UserInfoFrame.BackgroundTransparency = 1
+UserInfoFrame.Position = UDim2.new(0, 0, 0, 70)
+UserInfoFrame.Size = UDim2.new(1, 0, 0, 60)
+
+local UserImage = Instance.new("ImageLabel")
+UserImage.Parent = UserInfoFrame
+UserImage.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
+UserImage.Position = UDim2.new(0.05, 0, 0, 0)
+UserImage.Size = UDim2.new(0, 45, 0, 45)
+UserImage.Image = game:GetService("Players"):GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+Instance.new("UICorner", UserImage).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", UserImage).Color = Settings.AccentColor
+
+local UserName = Instance.new("TextLabel")
+UserName.Parent = UserInfoFrame
+UserName.BackgroundTransparency = 1
+UserName.Position = UDim2.new(0.35, 0, 0, 5)
+UserName.Size = UDim2.new(0.6, 0, 0, 20)
+UserName.Font = Enum.Font.GothamBold
+UserName.Text = Player.DisplayName
+UserName.TextColor3 = Color3.fromRGB(255, 255, 255)
+UserName.TextSize = 12
+UserName.TextXAlignment = Enum.TextXAlignment.Left
+
+local UserIDLabel = Instance.new("TextLabel")
+UserIDLabel.Parent = UserInfoFrame
+UserIDLabel.BackgroundTransparency = 1
+UserIDLabel.Position = UDim2.new(0.35, 0, 0, 20)
+UserIDLabel.Size = UDim2.new(0.6, 0, 0, 20)
+UserIDLabel.Font = Enum.Font.Gotham
+UserIDLabel.Text = "@" .. Player.Name
+UserIDLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+UserIDLabel.TextSize = 10
+UserIDLabel.TextXAlignment = Enum.TextXAlignment.Left
+
 local TabList = Instance.new("ScrollingFrame")
 TabList.Parent = SideMenu
-TabList.Position = UDim2.new(0, 0, 0, 70)
-TabList.Size = UDim2.new(1, 0, 1, -140)
+TabList.Position = UDim2.new(0, 0, 0, 140)
+TabList.Size = UDim2.new(1, 0, 1, -210)
 TabList.BackgroundTransparency = 1
 TabList.ScrollBarThickness = 0
 local TLL = Instance.new("UIListLayout", TabList)
@@ -405,7 +508,7 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	Desc1.BackgroundTransparency = 1
 	Desc1.Font = Enum.Font.Gotham
 	Desc1.Text = line1
-	Desc1.TextColor3 = (name == "AIMBOT + ESP" and line1 == "Works in almost all games") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 150)
+	Desc1.TextColor3 = Color3.fromRGB(150, 150, 150)
 	Desc1.TextSize = 11
 	Desc1.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -416,7 +519,7 @@ local function AddButton(page, name, line1, line2, btnText, callback, specialLin
 	Desc2.BackgroundTransparency = 1
 	Desc2.Font = Enum.Font.GothamMedium
 	Desc2.Text = line2
-    Desc2.TextColor3 = (line2 == "PATCHED" or line2 == "Needs Key" or line2 == "Latest Version" or line2 == "BY HENRIQSZ7" or line2 == "Universal" or line2 == "Admin") and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(150, 150, 150)
+    Desc2.TextColor3 = Color3.fromRGB(200, 60, 60)
 	Desc2.TextXAlignment = Enum.TextXAlignment.Left
 
     if specialLine and specialLine ~= "" then
@@ -470,6 +573,22 @@ AddButton(ProjectSlayers, "FIRE HUB", "Auto farm everything", "PATCHED", "Execut
 
 -- [[ WESTBOUND PAGE ]] --
 AddButton(WestBound, "TRXSH HUB", "Auto farm money", "Latest Version", "Execute", function() ExecuteScript(_U.WEST) end, "YOU NEED TO EXECUTE BEFORE SPAWNING. IF YOU ARE ALREADY SPAWNED REJOIN THE GAME AND EXECUTE THE SCRIPT IN THE LOADING SCREEN OR IN THE TEAM SELECTION SCREEN")
+AddButton(WestBound, "FRIEND CHECK", "Ignore only Roblox friends", "BY HENRIQSZ7", (getgenv().FriendCheckEnabled and "ON" or "OFF"), function(btn) 
+    getgenv().FriendCheckEnabled = not getgenv().FriendCheckEnabled
+    btn.Text = getgenv().FriendCheckEnabled and "ON" or "OFF"
+end)
+AddButton(WestBound, "FAST FIRE", "No cooldown shooting", "BY HENRIQSZ7", (getgenv().FastFireEnabled and "ON" or "OFF"), function(btn) 
+    getgenv().FastFireEnabled = not getgenv().FastFireEnabled
+    btn.Text = getgenv().FastFireEnabled and "ON" or "OFF"
+end)
+AddButton(WestBound, "FAST RELOAD", "Instant reload all guns", "BY HENRIQSZ7", (getgenv().FastReloadEnabled and "ON" or "OFF"), function(btn) 
+    getgenv().FastReloadEnabled = not getgenv().FastReloadEnabled
+    btn.Text = getgenv().FastReloadEnabled and "ON" or "OFF"
+end)
+AddButton(WestBound, "NO RECOIL", "Removes gun shake and spread", "BY HENRIQSZ7", (getgenv().NoRecoilEnabled and "ON" or "OFF"), function(btn) 
+    getgenv().NoRecoilEnabled = not getgenv().NoRecoilEnabled
+    btn.Text = getgenv().NoRecoilEnabled and "ON" or "OFF"
+end)
 AddButton(WestBound, "ESP NAME INFO", "See names through walls", "BY HENRIQSZ7", (getgenv().EspNameEnabled and "ON" or "OFF"), function(btn) 
     getgenv().EspNameEnabled = not getgenv().EspNameEnabled
     btn.Text = getgenv().EspNameEnabled and "ON" or "OFF"
@@ -497,6 +616,7 @@ AddButton(WestBound, "AIMBOT KEYBIND", "Change Aimbot Key", "CURRENT: " .. getge
 end)
 
 -- [[ UNIVERSAL PAGE ]] --
+AddButton(Universal, "SILENT AIM", "Universal Script", "Silent Aim working in almost all games", "Execute", function() ExecuteScript(_U.SILENT_AIM) end)
 AddButton(Universal, "AIMBOT + ESP", "Works in almost all games", "Universal", "Execute", function() ExecuteScript(_U.AIM_UNIVERSAL) end)
 AddButton(Universal, "INFINITE YIELD", "Universal script commands", "Admin", "Execute", function() ExecuteScript(_U.IY) end)
 
@@ -591,6 +711,7 @@ local function Decode(t)
 end
 local _V1 = {55,98,56,48,54,102,57,48,45,54,100,55,101,45,52,101,97,53,45,57,51,57,101,45,98,101,54,57,56,97,97,54,101,54,50,57}
 local _V2 = {104,101,110,114,105,113,115,122,55}
+local KEY_DIA = "7b806f90-6d7e-4ea5-939e-be698aa6e629"
 
 local function OpenHub()
     KeyFrame.Visible = false
@@ -600,6 +721,13 @@ local function OpenHub()
     if Settings.AutoExecute then ExecuteScript(_U.WEST) end
 end
 
+KeyInput:GetPropertyChangedSignal("Text"):Connect(function()
+    local input = KeyInput.Text
+    if input == Decode(_V2) or input == Decode(_V1) or input == KEY_DIA then
+        OpenHub()
+    end
+end)
+
 task.spawn(function() 
     if CurrentDeviceID ~= "" and CurrentDeviceID == ADMIN_HWID then 
         OpenHub() 
@@ -607,14 +735,18 @@ task.spawn(function()
 end)
 
 AuthBtn.MouseButton1Click:Connect(function()
-    if KeyInput.Text == Decode(_V2) or KeyInput.Text == Decode(_V1) then 
+    if KeyInput.Text == Decode(_V2) or KeyInput.Text == Decode(_V1) or KeyInput.Text == KEY_DIA then 
         OpenHub() 
     else 
         KeyInput.Text = "WRONG KEY!" 
     end
 end)
 
-GetKeyBtn.MouseButton1Click:Connect(function() if setclipboard then setclipboard("https://work.ink/24Qe/key") end end)
+GetKeyBtn.MouseButton1Click:Connect(function() 
+    if setclipboard then 
+        setclipboard("https://work.ink/24Qe/key-1") 
+    end 
+end)
 
 UserInputService.InputBegan:Connect(function(input)
 	if input.KeyCode == Settings.HideKey then
