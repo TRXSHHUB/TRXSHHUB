@@ -64,6 +64,7 @@ getgenv().AimbotFOV = 150
 getgenv().AimbotSmoothing = 0.15
 getgenv().NoRecoilEnabled = false
 getgenv().FastFireEnabled = false
+getgenv().FastEquipEnabled = false
 getgenv().FriendCheckEnabled = true
 
 local FOVCircle = Drawing.new("Circle")
@@ -142,15 +143,16 @@ local function CheckFriendStatus(targetPlr)
     return isFriend
 end
 
--- [[ UPDATED ESP LOGIC ]] --
+-- [[ UPDATED ESP LOGIC WITH DISTANCE ]] --
 local function UpdateEsp()
     for _, plr in pairs(game.Players:GetPlayers()) do
         if plr ~= Player then
             local char = plr.Character
             if char and IsValidTarget(plr) then
                 local isFriend = CheckFriendStatus(plr)
-                local targetRoot = char:FindFirstChild("HumanoidRootPart")
+                local root = char:FindFirstChild("HumanoidRootPart")
 
+                -- ESP NAME & DISTANCE --
                 if getgenv().EspNameEnabled then
                     local head = char:FindFirstChild("Head")
                     if head then
@@ -174,9 +176,8 @@ local function UpdateEsp()
                         end
                         
                         local distText = ""
-                        if getgenv().EspDistanceEnabled and targetRoot and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
-                            local myRoot = Player.Character.HumanoidRootPart
-                            local d = (targetRoot.Position - myRoot.Position).Magnitude
+                        if getgenv().EspDistanceEnabled and root and Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                            local d = (root.Position - Player.Character.HumanoidRootPart.Position).Magnitude
                             distText = "\n[" .. math.floor(d) .. "m]"
                         end
                         billboard.MainLabel.Text = plr.Name .. distText
@@ -185,6 +186,7 @@ local function UpdateEsp()
                     if char:FindFirstChild("TrxshName") then char.TrxshName:Destroy() end
                 end
 
+                -- ESP BODY --
                 if getgenv().EspCorpoEnabled and not isFriend then
                     if not char:FindFirstChild("TrxshEspCorpo") then
                         local highlight = Instance.new("Highlight")
@@ -213,40 +215,36 @@ task.spawn(function()
     end
 end)
 
--- [[ DEFINITIVE NO RECOIL & FAST FIRE LOGIC ]] --
-RunService.RenderStepped:Connect(function()
-    if getgenv().NoRecoilEnabled then
-        Camera.RotVelocity = Vector3.new(0,0,0)
-    end
-end)
-
-task.spawn(function()
-    while task.wait() do
-        pcall(function()
-            if not Player.Character then return end
-            local items = {}
-            for _, v in pairs(Player.Backpack:GetChildren()) do table.insert(items, v) end
-            for _, v in pairs(Player.Character:GetChildren()) do if v:IsA("Tool") then table.insert(items, v) end end
-
-            for _, tool in pairs(items) do
+-- [[ FINALIZED GUN MODS LOGIC ]] --
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        if not Player.Character then return end
+        local tools = Player.Backpack:GetChildren()
+        local held = Player.Character:FindFirstChildOfClass("Tool")
+        if held then table.insert(tools, held) end
+        
+        for _, tool in pairs(tools) do
+            if tool:IsA("Tool") then
                 local stats = tool:FindFirstChild("Stats") or tool:FindFirstChild("Configuration")
                 if stats then
                     if getgenv().NoRecoilEnabled then
-                        local recoil = stats:FindFirstChild("Recoil") or stats:FindFirstChild("RecoilPower")
-                        local spread = stats:FindFirstChild("Spread") or stats:FindFirstChild("MaxSpread") or stats:FindFirstChild("MinSpread")
-                        local shake = stats:FindFirstChild("Shake") or stats:FindFirstChild("CamShake")
-                        if recoil then recoil.Value = 0 end
-                        if spread then spread.Value = 0 end
-                        if shake then shake.Value = 0 end
+                        local r = stats:FindFirstChild("Recoil") or stats:FindFirstChild("RecoilPower")
+                        if r then r.Value = 0 end
+                        local s = stats:FindFirstChild("Spread") or stats:FindFirstChild("MaxSpread")
+                        if s then s.Value = 0 end
+                    end
+                    if getgenv().FastEquipEnabled then
+                        local et = stats:FindFirstChild("EquipTime") or stats:FindFirstChild("EquipDelay")
+                        if et then et.Value = 0 end
                     end
                     if getgenv().FastFireEnabled then
-                        local firerate = stats:FindFirstChild("FireRate") or stats:FindFirstChild("Cooldown") or stats:FindFirstChild("Delay")
-                        if firerate then firerate.Value = 0 end
+                        local fr = stats:FindFirstChild("FireRate") or stats:FindFirstChild("Cooldown")
+                        if fr then fr.Value = 0.01 end
                     end
                 end
             end
-        end)
-    end
+        end
+    end)
 end)
 
 -- [[ AIMBOT LOGIC ]] --
@@ -400,6 +398,7 @@ Logo.Text = "TRXSH HUB"
 Logo.TextColor3 = Settings.AccentColor
 Logo.TextSize = 18
 
+-- [[ USER INFO SECTION ]] --
 local UserInfoFrame = Instance.new("Frame")
 UserInfoFrame.Parent = SideMenu
 UserInfoFrame.BackgroundTransparency = 1
@@ -455,6 +454,7 @@ ContentArea.BackgroundTransparency = 1
 
 MakeDraggable(MainHub)
 
+-- [[ COMPONENTS ]] --
 local function CreateTab(name, layoutOrder)
 	local TabBtn = Instance.new("TextButton")
 	TabBtn.Parent = TabList
@@ -580,8 +580,9 @@ local ConfigTab = CreateTab("SETTINGS", 99)
 local DiscordTab = CreateTab("DISCORD", 100)
 local CreditsTab = CreateTab("CREDITS", 101)
 
+-- [[ FIX SCROLLING SIZES ]] --
 ProjectSlayers.CanvasSize = UDim2.new(0,0,0,500)
-WestBound.CanvasSize = UDim2.new(0,0,0,1100)
+WestBound.CanvasSize = UDim2.new(0,0,0,1000)
 Universal.CanvasSize = UDim2.new(0,0,0,500)
 ConfigTab.CanvasSize = UDim2.new(0,0,0,1000)
 
@@ -592,7 +593,7 @@ AddButton(ProjectSlayers, "FIRE HUB", "Auto farm everything", "PATCHED", "Execut
 
 -- [[ WESTBOUND PAGE ]] --
 AddButton(WestBound, "TRXSH HUB", "Auto farm money", "Latest Version", "Execute", function() ExecuteScript(_U.WEST) end, "YOU NEED TO EXECUTE BEFORE SPAWNING. IF YOU ARE ALREADY SPAWNED REJOIN THE GAME AND EXECUTE THE SCRIPT IN THE LOADING SCREEN OR IN THE TEAM SELECTION SCREEN")
-AddButton(WestBound, "AIMBOT (FIXED)", "Lock-on Body", "DEFAULT KEY: E", (getgenv().AimbotEnabled and "ON" or "OFF"), function(btn) 
+AddButton(WestBound, "AIMBOT (FIXED)", "Lock-on Body", "BY HENRIQSZ7", (getgenv().AimbotEnabled and "ON" or "OFF"), function(btn) 
     getgenv().AimbotEnabled = not getgenv().AimbotEnabled
     btn.Text = getgenv().AimbotEnabled and "ON" or "OFF"
 end)
@@ -613,11 +614,15 @@ AddButton(WestBound, "FRIEND CHECK", "Ignore only Roblox friends", "BY HENRIQSZ7
     getgenv().FriendCheckEnabled = not getgenv().FriendCheckEnabled
     btn.Text = getgenv().FriendCheckEnabled and "ON" or "OFF"
 end)
-AddButton(WestBound, "FAST FIRE", "Instant shooting speed", "BY HENRIQSZ7", (getgenv().FastFireEnabled and "ON" or "OFF"), function(btn) 
+AddButton(WestBound, "FAST FIRE", "No cooldown shooting", "BY HENRIQSZ7", (getgenv().FastFireEnabled and "ON" or "OFF"), function(btn) 
     getgenv().FastFireEnabled = not getgenv().FastFireEnabled
     btn.Text = getgenv().FastFireEnabled and "ON" or "OFF"
 end)
-AddButton(WestBound, "NO RECOIL DEFINITIVE", "No shake, no spread, no lift", "BY HENRIQSZ7", (getgenv().NoRecoilEnabled and "ON" or "OFF"), function(btn) 
+AddButton(WestBound, "FAST EQUIP", "Instant draw weapons", "BY HENRIQSZ7", (getgenv().FastEquipEnabled and "ON" or "OFF"), function(btn) 
+    getgenv().FastEquipEnabled = not getgenv().FastEquipEnabled
+    btn.Text = getgenv().FastEquipEnabled and "ON" or "OFF"
+end)
+AddButton(WestBound, "NO RECOIL", "Removes gun shake and spread", "BY HENRIQSZ7", (getgenv().NoRecoilEnabled and "ON" or "OFF"), function(btn) 
     getgenv().NoRecoilEnabled = not getgenv().NoRecoilEnabled
     btn.Text = getgenv().NoRecoilEnabled and "ON" or "OFF"
 end)
@@ -676,6 +681,7 @@ AddButton(ConfigTab, "PERFORMANCE MODE", "Remove textures to boost FPS", "Perfor
     for _, v in pairs(game:GetDescendants()) do if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end end
 end)
 
+-- [[ HUD ELEMENTS ]] --
 local FpsCounter = Instance.new("TextLabel", MainHub)
 FpsCounter.Size = UDim2.new(0, 100, 0, 20)
 FpsCounter.Position = UDim2.new(0, 195, 0, 10)
@@ -686,6 +692,7 @@ FpsCounter.TextSize = 12
 FpsCounter.TextXAlignment = Enum.TextXAlignment.Left
 FpsCounter.Visible = false
 
+-- [[ MAIN LOOP (FPS & RAINBOW) ]] --
 task.spawn(function()
     local lastUpdate = tick()
     local frames = 0
@@ -711,7 +718,10 @@ task.spawn(function()
     end
 end)
 
+-- [[ DISCORD ]] --
 AddButton(DiscordTab, "TRXSH HUB COMMUNITY", "Join official Discord", "Get News", "Copy Link", function() if setclipboard then setclipboard(Settings.DiscordLink) end end)
+
+-- [[ CREDITS PAGE ]] --
 AddButton(CreditsTab, "PROJECT OWNER", "henriqsz7", "All UI/Logic", "", function() end)
 AddButton(CreditsTab, "UI DESIGNER", "henriqsz7", "Modern Dark Theme", "", function() end)
 AddButton(CreditsTab, "VERSION", "3.9.0", "Stable Build", "", function() end)
@@ -735,7 +745,13 @@ local function OpenHub()
     if Settings.AutoExecute then ExecuteScript(_U.WEST) end
 end
 
--- Removido verificação automática ao digitar para corrigir o painel que não sumia
+KeyInput:GetPropertyChangedSignal("Text"):Connect(function()
+    local input = KeyInput.Text
+    if input == Decode(_V2) or input == Decode(_V1) or input == KEY_DIA then
+        OpenHub()
+    end
+end)
+
 task.spawn(function() 
     if CurrentDeviceID ~= "" and CurrentDeviceID == ADMIN_HWID then 
         OpenHub() 
@@ -743,8 +759,7 @@ task.spawn(function()
 end)
 
 AuthBtn.MouseButton1Click:Connect(function()
-    local input = KeyInput.Text
-    if input == Decode(_V2) or input == Decode(_V1) or input == KEY_DIA then 
+    if KeyInput.Text == Decode(_V2) or KeyInput.Text == Decode(_V1) or KeyInput.Text == KEY_DIA then 
         OpenHub() 
     else 
         KeyInput.Text = "WRONG KEY!" 
